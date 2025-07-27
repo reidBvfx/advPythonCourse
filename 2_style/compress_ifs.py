@@ -8,33 +8,23 @@
 
 # COMMENT --------------------------------------------------
 # Not optimal
+
 def set_color(ctrlList=None, color=None):
 
+    #dictionary of possible colors and related overRideColor Setting
+    colorSettings = { 1 : 4, 2 : 13, 3 : 25, 4 : 17, 5 : 17, 6 : 15, 7 : 6, 8 : 16}
+    
     for ctrlName in ctrlList:
         try:
             mc.setAttr(ctrlName + 'Shape.overrideEnabled', 1)
         except:
             pass
-
-        try:
-            if color == 1:
-                mc.setAttr(ctrlName + 'Shape.overrideColor', 4)
-            elif color == 2:
-                mc.setAttr(ctrlName + 'Shape.overrideColor', 13)
-            elif color == 3:
-                mc.setAttr(ctrlName + 'Shape.overrideColor', 25)
-            elif color == 4:
-                mc.setAttr(ctrlName + 'Shape.overrideColor', 17)
-            elif color == 5:
-                mc.setAttr(ctrlName + 'Shape.overrideColor', 17)
-            elif color == 6:
-                mc.setAttr(ctrlName + 'Shape.overrideColor', 15)
-            elif color == 7:
-                mc.setAttr(ctrlName + 'Shape.overrideColor', 6)
-            elif color == 8:
-                mc.setAttr(ctrlName + 'Shape.overrideColor', 16)
+        
+        try: 
+            mc.setAttr(ctrlName + 'Shape.overrideColor', colorSettings[color])        
         except:
             pass
+           
 
 
 # EXAMPLE
