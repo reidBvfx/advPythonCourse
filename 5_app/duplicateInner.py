@@ -1,27 +1,19 @@
 # STYLE ***************************************************************************
 #
-#content = create a duplicate of selected mesh and delete all faces except for "inner faces"
+# content = create a duplicate mesh's "inner faces"
 #
 # date    = 2025-07-20
 #
-#checklist of needed function/parameters (delete later)
-    # list of inner faces - SSM_UI
-    #list of outer faces - SSM_UI
-    #name of selected mesh -SSM_UI
-    #split duplication and deletion
-    #   need to duplicate geo move verts and then delete so that vertex names correspond to original geo
+# needed  = -list of inner faces - SSM_UI
+#           -list of outer faces - SSM_UI
+#           -name of selected mesh -SSM_UI
+#           -split duplication and deletion
+#           -need to duplicate geo move verts and then delete so that vertex names correspond to original geo
 #**********************************************************************************
-
-
-
-import os
-import re
 
 import maya.cmds as cmds
 
 class duplicateInner():
-    def __init__(self, ):
-        pass
 
     def dupAndDel(self,obj, innerFaces, outerFaces):
         """
@@ -35,16 +27,16 @@ class duplicateInner():
         """
         simMesh =cmds.duplicate(obj, n = (obj + "_SIM"))[0]
         
-        #select all but inner face mesh
+        # select all but inner face mesh
         cmds.select( clear=True )#clear anything selected
         cmds.select(obj + "_SIM" + ".f[*]")#select all faces
         
-        #deselect all inner faces
+        # deselect all inner faces
         for face in innerFaces:
             faceSelect = (simMesh + ".f[" + str(face) + "]")
             cmds.select(faceSelect, deselect = True)
         cmds.delete()
-        #cmds.delete(simMesh, constructionHistory = True)
+        # cmds.delete(simMesh, constructionHistory = True)
 
         return simMesh
 
