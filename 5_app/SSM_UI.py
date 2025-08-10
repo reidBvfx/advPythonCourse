@@ -11,7 +11,7 @@
 #           - see if best to use getter/setter functions or use global variables
 #**********************************************************************************
 
-import maya.cmds as cmds
+import maya.cmds as cmds #type: ignore
 
 class SSM_UI():
     def __init__(self, winName = "SSM", winTitle = 'SSM'):
@@ -53,5 +53,5 @@ class SSM_UI():
     def start(self):
         self.ui_elem()
 
-d = SSM_UI()
-d.start()
+UI = SSM_UI()
+UI.start()
