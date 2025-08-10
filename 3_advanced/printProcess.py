@@ -25,3 +25,38 @@ END - 00:00:00
 START - long_sleeping
 
 """
+
+import time
+
+
+#*********************************************************************
+# DECORATOR
+def print_process(func):
+    def wrapper(*args, **kwargs):
+        print(f"Start - {func.__name__}")
+        start = time.time()
+        func(*args) # main_function
+        end = time.time() 
+        formatted_time = time.strftime('%H:%M:%S', time.gmtime(end - start  ))              
+        print(f"End - {formatted_time}")
+    return wrapper
+
+
+#*********************************************************************
+# FUNC
+@print_process
+def short_sleeping(name):
+    time.sleep(.1)
+    print(name)
+
+@print_process
+def mid_sleeping():
+    time.sleep(2)
+
+@print_process
+def long_sleeping():
+    time.sleep(4)
+
+short_sleeping("so sleepy")
+mid_sleeping()
+long_sleeping()
