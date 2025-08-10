@@ -20,7 +20,6 @@ def dupAndDel(obj, innerFaces):
     
     Arguments: 
         innerFaces = [names of all inner faces]
-        outerFaces = [names of all outer faces]
     Returns:
         name of duplicated mesh
     """

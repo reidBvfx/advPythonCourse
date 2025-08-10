@@ -12,74 +12,23 @@ import re
 import json
 import time
 
-import maya.cmds as cmds # type: ignore
+#import maya.cmds as cmds # type: ignore
 
+import sys
+sys.path.append('C:\\Users\\apoll\\Desktop\\advPythonCourse\\5_app')
+from DSObject import DSObject as ds
 
 class vertexInfo():
-    def __init__(self):
-        #path to get object info
-        json_path = r"C:\Users\apoll\Desktop\advPythonCourse\5_app\objectData_militaryJacket.json"
-        # read json file
-        with open(json_path) as json_file:
-            objectData = json.load(json_file) 
+    def __init__(self, cloth):
+        self.cloth = cloth
         
-        self.objName = objectData['objectName']
-        self.simObjName = objectData['simObjectName']
-        self.simShapeName = self.simObjName + "Shape"
-
-        self.outerFaces = objectData['outerFaces']
-        print("outer: " + str(len(self.outerFaces)))
-        self.outerFaces = self.correctNameFace(self.outerFaces)
-        self.unMatchedFaces = self.outerFaces
-
-        self.innerFaces = objectData['innerFaces']
-        print("innerFaces: " + str(len(self.innerFaces)))
-        
-        self.innerFaces = self.correctNameFace(self.innerFaces)
-        
+        self.unMatchedFaces = cloth.getInnerFaces()
         self.matchedFacesDict = {}
-        self.matchedVertsDict = {}
+        self.matchedVertsDict = cloth.alreadyMatched()
         #path to export matching verts Dict
         self.json_pathWrite = r"C:\Users\apoll\Desktop\advPythonCourse\5_app\objectData_militaryJacket_mirroredVerts.json"
        
-       
-    def correctNameFace(self, facesList):
-        """ removed range from bracket [x:y] and inserts value in range into new list"""
-        temp_faceList = []
-        for face in facesList:
-                objName = face.split('.f')[0]
-                if ":" in face:  
-                    nPCompile = re.compile(r'(\d+)') 
-                    numbers = nPCompile.findall(face)
-                    for i in range(int(numbers[0]), int(numbers[1])+1):
-                        temp_faceList.append(objName + ".f[" +str(i) + ']') 
-                        i += 1
-                else:
-                    temp_faceList.append(face)
-        return temp_faceList    
-        
-    def correctNameVertex(self, vertexList):
-        """ removed range from bracket [x:y] and inserts value in range into new list"""
-        temp_vertexList = []
-        for vertex in vertexList:
-                objName = vertex.split('.vtx')[0]
-                # correct naming convention
-                if ":" in vertex:  
-                    nPCompile = re.compile(r'(\d+)') 
-                    numbers = nPCompile.findall(vertex)
-                    for i in range(int(numbers[0]), int(numbers[1])+1):
-                        temp_vertexList.append(objName + ".vtx[" +str(i) + ']') 
-                        i += 1
-                else:
-                    temp_vertexList.append(vertex)
-        return temp_vertexList        
-    
-    def findNumber(self, vert):
-        """take vertex name and return int inside the brackets"""
-        nPCompile = re.compile(r'(\d+)') 
-        number = nPCompile.findall(vert)[0]
-        return number
-    
+     
     def faceToVert(self, faces):
         """ Convert list of faces into list of corresponding vertices
             Reformat vertices list to meet standard naming convention
@@ -97,7 +46,7 @@ class vertexInfo():
             tempVerts.append(cmds.polyListComponentConversion(face, ff = True, tv = True))
         # break up into individual verts
         for vert in tempVerts:
-            tempVerts = self.correctNameVertex(vert)
+            tempVerts = self.cloth.correctNameVertex(vert)
             for each in tempVerts:
                 verts.append(each)
         return verts
@@ -151,8 +100,8 @@ class vertexInfo():
         #all matching verts are in dict so find center
         for keyVert in self.matchedVertsDict:
             center = self.findCenter(keyVert, self.matchedVertsDict[keyVert])
-            vNumber = self.findNumber(keyVert)
-            dupV = f"{self.simShapeName}.vtx[{vNumber}]"
+            vNumber = self.cloth.findNumber(keyVert)
+            dupV = f"{self.cloth.simShapeName}.vtx[{vNumber}]"
             cmds.xform(dupV, t = center)
     
     def findMirrorVert(self, v, vertsList):
@@ -215,20 +164,27 @@ class vertexInfo():
                 
     def start(self):
         """Tested on geo from : https://www.turbosquid.com/3d-models/military-uniform-2418050 """
-
-        #for each in self.innerFaces:
-        #self.getMirrorFace(each)
+        print(self.matchedVertsDict)
+        # #for each in self.innerFaces:
+        # #self.getMirrorFace(each)
+        
         start = time.time()
+        innerFacesList = self.cloth.getInnerFaces()
         for i in range(300):
-            self.getMirrorFace(self.innerFaces[i])
+            self.getMirrorFace(innerFacesList [i])
             
         self.moveAllVerts()    
         end = time.time()
         print("time " + str(end-start))
-        print(self.matchedFacesDict)
-        print(self.matchedVertsDict)
-        with open(self.json_pathWrite, 'w') as outfile:
-            json.dump(self.matchedVertsDict, outfile, indent=4)
+        # print(self.matchedFacesDict)
+        # print(self.matchedVertsDict)
 
-VertexInfo = vertexInfo()
+        vertDictContainer = {}
+        vertDictContainer[self.cloth.objectName] = self.matchedVertsDict
+
+        with open(self.json_pathWrite, 'w') as outfile:
+            json.dump(vertDictContainer, outfile, indent=4)
+
+jacket = ds(r"C:\Users\apoll\Desktop\advPythonCourse\5_app\objectData_militaryJacket.json")
+VertexInfo = vertexInfo(jacket)
 VertexInfo.start()

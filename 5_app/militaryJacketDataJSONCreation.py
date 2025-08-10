@@ -15,10 +15,7 @@ object_data =   {'objectName'   : "military_uniform" ,
                                   'military_uniformShape.f[6006:6901]', 'military_uniformShape.f[7798:7871]', 
                                   'military_uniformShape.f[8462:8676]', 'military_uniformShape.f[11056:12367]']
 }
-        
-            
-
-
+  
 # write json file
 with open(json_path, 'w') as outfile:
     json.dump(object_data, outfile, indent=4)
