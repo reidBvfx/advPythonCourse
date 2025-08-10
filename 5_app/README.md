@@ -5,8 +5,14 @@ Clothing geo is usually 2 sided geometry, but must be simmed with a single plane
 Changes:
 
 getVertexInfo:
+    - now takes DSObject as an argument
     - cleaner moveAllVerts
-    - reads from JSON file
     - outputs matching verts to JSON file
+    
+    
+
+DSObect:
+    - reads from JSON file
     - fixing naming conventions now 2 functions [correctNameFace & correctNameVertex]
     - finding number in poly name is own function
+    - getter and setter functions for path and lists
