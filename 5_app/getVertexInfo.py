@@ -8,14 +8,13 @@
 #           - make functional if a seam is single sided
 #**********************************************************************************
 
-import re
 import json
 import time
-
-#import maya.cmds as cmds # type: ignore
-
+import os 
 import sys
-sys.path.append('C:\\Users\\apoll\\Desktop\\advPythonCourse\\5_app')
+
+import maya.cmds as cmds # type: ignore
+sys.path.append(os.path.dirname(__file__))
 from DSObject import DSObject as ds
 
 class vertexInfo():
@@ -26,9 +25,8 @@ class vertexInfo():
         self.matchedFacesDict = {}
         self.matchedVertsDict = cloth.alreadyMatched()
         #path to export matching verts Dict
-        self.json_pathWrite = r"C:\Users\apoll\Desktop\advPythonCourse\5_app\objectData_militaryJacket_mirroredVerts.json"
-       
-     
+        self.json_pathWrite = os.path.join(os.path.dirname(__file__), 'configFiles//jacketMirroredVerts.json')
+         
     def faceToVert(self, faces):
         """ Convert list of faces into list of corresponding vertices
             Reformat vertices list to meet standard naming convention
@@ -63,10 +61,12 @@ class vertexInfo():
         for oFace in self.unMatchedFaces:
             oFaceLoc = cmds.xform(oFace, t = True, q = True)
             #edge faces have 9 others have 6
+           
             if(len(oFaceLoc) != rangeL):
                 break
             match = 0
             diff = 0
+            
             for i in range(rangeL):
                 diffN = abs(faceLoc[i] - oFaceLoc[i])
                 if(diffN < 3):
@@ -76,6 +76,7 @@ class vertexInfo():
                 if(i == 2 & match < 2):
                     i = 9        
                 i += 1
+            
             if(diff < smallestDiff):
                 matchFace = oFace
                 smallestDiff = diff
@@ -89,15 +90,16 @@ class vertexInfo():
         return matchFace   
 
     def moveAllVerts(self):
-        #get matching verts for every face in dictonary
+        # get matching verts for every face in dictonary
         for key in self.matchedFacesDict:
             innerVerts = self.faceToVert(key)
             self.outerVerts = []
             self.outerVerts = self.faceToVert(self.matchedFacesDict[key])
+            
             for each in innerVerts:
                 self.findMirrorVert(each, self.outerVerts)
    
-        #all matching verts are in dict so find center
+        # all matching verts are in dict so find center
         for keyVert in self.matchedVertsDict:
             center = self.findCenter(keyVert, self.matchedVertsDict[keyVert])
             vNumber = self.cloth.findNumber(keyVert)
@@ -118,12 +120,14 @@ class vertexInfo():
             vertLoc = cmds.xform(vert, t = True, q = True)
             match = 0
             diff = 0
+            
             for i in range(3):
                 diffN = abs(vLoc[i] - vertLoc[i])
                 if(diffN < 3):
                     match += 1
                     diff += diffN
                 i+=1
+            
             if(diff < smallestDiff):
                         matchVert = vert
                         smallestDiff = diff
@@ -170,6 +174,7 @@ class vertexInfo():
         
         start = time.time()
         innerFacesList = self.cloth.getInnerFaces()
+        
         for i in range(300):
             self.getMirrorFace(innerFacesList [i])
             
@@ -185,6 +190,7 @@ class vertexInfo():
         with open(self.json_pathWrite, 'w') as outfile:
             json.dump(vertDictContainer, outfile, indent=4)
 
-jacket = ds(r"C:\Users\apoll\Desktop\advPythonCourse\5_app\objectData_militaryJacket.json")
+jacket = ds(os.path.join(os.path.dirname(__file__), 'JacketMirroredVerts.json'))
+    #r"C:\Users\apoll\Desktop\advPythonCourse\5_app\objectData_militaryJacket.json")
 VertexInfo = vertexInfo(jacket)
 VertexInfo.start()

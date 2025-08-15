@@ -5,14 +5,16 @@
 #**********************************************************************************
 """ Made double sided object(DSO) into a class because every DSO will have the same attributes and 
     needs the same modification before being sent to getVertexInfo
-    Also makes getVertexInfo.py less clutter and more concentrated"""
+    Also makes getVertexInfo.py less clutter and more concentrated """
 import json
 import re
+import os
 
+import maya.cmds as cmds #type: ignore
 
 class DSObject():
     def __init__(self, path):
-        #path to get object info
+        # path to get object info
         self.json_path = path
         
         # read json file
@@ -24,8 +26,7 @@ class DSObject():
         self.objName = objectData['objectName'] 
         self.simObjName = objectData['simObjectName']
         self.simShapeName = self.simObjName + "Shape"
-        #objData will have the faces listed exactly as Maya send them ex. name.f[x:y] 
-        #correctName will make if so its a list of name.f[x] name.f[x+1]... name.f[y]
+
         self.outerFaces = self.correctNameFace(objectData['outerFaces'])
         self.innerFaces = self.correctNameFace(objectData['innerFaces'])
 
@@ -61,7 +62,7 @@ class DSObject():
         return temp_vertexList        
     
     def findNumber(self, vert):
-        """take vertex name and return int inside the brackets"""
+        """ take vertex name and return int inside the brackets"""
         nPCompile = re.compile(r'(\d+)') 
         number = nPCompile.findall(vert)[0]
         return number
@@ -89,6 +90,32 @@ class DSObject():
         except:
              return dict
 
-militaryJacket = DSObject(r"C:\Users\apoll\Desktop\advPythonCourse\5_app\objectData_militaryJacket.json")
+
+    def dupAndDel(self, obj, innerFaces):
+        """
+        Creates a duplicated mesh of selected object and deletes faces to create a single sided mesh
+        
+        Arguments: 
+            innerFaces = [names of all inner faces]
+        Returns:
+            name of duplicated mesh
+        """
+        simMesh =cmds.duplicate(obj, n = (obj + "_SIM"))[0]
+        
+        # select all but inner face mesh
+        cmds.select( clear=True )#clear anything selected
+        cmds.select(obj + "_SIM" + ".f[*]")#select all faces
+        
+        # deselect all inner faces
+        for face in innerFaces:
+            faceSelect = (simMesh + ".f[" + str(face) + "]")
+            cmds.select(faceSelect, deselect = True)
+        cmds.delete()
+        # cmds.delete(simMesh, constructionHistory = True)
+
+        return simMesh
+
+
+militaryJacket = DSObject(os.path.join(os.path.dirname(__file__), 'configFiles//objectDataJacket.json'))
 
 
