@@ -1,7 +1,7 @@
 import json
 import os
 
-json_path = os.path.join(os.path.dirname(__file__), 'configFiles//objectDataJacket.json')
+json_path = os.path.join(os.path.dirname(__file__), 'configFiles//jacketData.json')
 #r"C:\Users\apoll\Desktop\advPythonCourse\5_app\objectData_militaryJacket.json"
 
 object_data =   {'objectName'   : "military_uniform" ,

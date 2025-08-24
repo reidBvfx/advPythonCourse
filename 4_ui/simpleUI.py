@@ -13,6 +13,7 @@ import webbrowser
 from Qt import QtWidgets, QtGui, QtCore, QtCompat
 
 
+
 #*******************************************************************
 # VARIABLE
 TITLE = os.path.splitext(os.path.basename(__file__))[0]

@@ -2,6 +2,7 @@
 # content = creates object to hold all of double-sided geos info
 #           reads from JSON file and passed to getVertexInfo
 # date    = 2025-08-08
+# author  = Reid Bryan (reidwarhola@gmail.com)
 #**********************************************************************************
 """ Made double sided object(DSO) into a class because every DSO will have the same attributes and 
     needs the same modification before being sent to getVertexInfo
@@ -9,8 +10,8 @@
 import json
 import re
 import os
-
-import maya.cmds as cmds #type: ignore
+__file__ = 'C:\\Users\\apoll\\Desktop\\advPythonCourse\\5_app\\'
+#import maya.cmds as cmds #type: ignore
 
 class DSObject():
     def __init__(self, path):
@@ -116,6 +117,6 @@ class DSObject():
         return simMesh
 
 
-militaryJacket = DSObject(os.path.join(os.path.dirname(__file__), 'configFiles//objectDataJacket.json'))
+militaryJacket = DSObject(os.path.join(os.path.dirname(__file__), 'configFiles//jacketData.json'))
 
 

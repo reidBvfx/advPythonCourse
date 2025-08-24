@@ -3,52 +3,83 @@
 #
 # date    = 2025-07-20
 #
-# needs   = - all need buttons and elements show on screen but is not intuitive or visually pleasing
-#           - buttons for added outer faces and showing list 
-#           - buttons are non-functional 
-#           - need to collected selected faces/objects to corresponding buttons
-#           - need to make collected info global for other modules to use
+# needs   =   - need to make collected info global for other modules to use
 #           - see if best to use getter/setter functions or use global variables
+# author  = Reid Bryan (reidwarhola@gmail.com)
 #**********************************************************************************
 
 import maya.cmds as cmds #type: ignore
 
-class SSM_UI():
-    def __init__(self, winName = "SSM", winTitle = 'SSM'):
-        self.winName = winName
-        self.winTitle = winTitle
-        self.object = ""
-        self.innerFaces = []
-        self.outerFaces = []
+import os
+import sys
+import webbrowser
 
-    def ui_elem(self):
-        """Creates all UI elements and calls function for button press
-        """
-        if cmds.window(self.winName, exists=True):
-            cmds.deleteUI(self.winName)
-        win = cmds.window(self.winName, title = self.winTitle)
-        winFormat = cmds.formLayout()
+from Qt import QtWidgets, QtGui, QtCore, QtCompat
 
-        # buttons
-        self.objNameButton = cmds.textFieldButtonGrp(label='Object Name:', text='', buttonLabel='Load Selected',w = 490, bc = self.getObjName)
+#*******************************************************************
+# VARIABLE
+TITLE = os.path.splitext(os.path.basename(__file__))[0]
+
+#*******************************************************************
+# CLASS
+class singleSidedGeoUI():
+    def __init__(self):
+        # BUILD local ui path
+        path_ui = "/".join([os.path.dirname(__file__), "ui", TITLE + ".ui"])
+
+        # LOAD ui with absolute path
+        self.wgUtil = QtCompat.loadUi(path_ui)
+
+        # BUTTONS***********************************************************************
+        self.wgUtil.btnAddSelectedObject.clicked.connect(self.addSel_obj)
         
-        self.addInnerFaces = cmds.button(label='Add Selected Object', w = 120, h = 30)
-        self.innerFacesList = cmds.cmdScrollFieldExecuter(width=200, height=100)
+        # for inner faces
+        self.wgUtil.btnAddSelectedInner.clicked.connect(self.addSel_inner)
+        self.wgUtil.btnRemoveInner.clicked.connect(self.removeSel_inner)
+        self.wgUtil.btnClearAllInner.clicked.connect(self.clear_inner)
+
+        # for outer faces
+        self.wgUtil.btnAddSelectedOuter.clicked.connect(self.addSel_outer)
+        self.wgUtil.btnRemoveOuter.clicked.connect(self.removeSel_outer)
+        self.wgUtil.btnClearAllOuter.clicked.connect(self.clear_outer)
         
-        # window formatting
-        cmds.formLayout( winFormat, edit=True, attachForm=[(self.objNameButton, 'top', 120), (self.addInnerFaces, 'top', 220), (self.addInnerFaces, 'left', 220), (self.innerFacesList, 'top', 220),(self.innerFacesList, 'left', 360)])
-        cmds.showWindow(self.winName)
-        cmds.window(self.winName, edit=True, widthHeight = (1000, 600))
+        # SHOW the UI
+        self.wgUtil.show()
 
-    def getObjName(self):
-        """
-        Returns:
-            name of selected object
-        """
-        print("obj name")
+    #************************************************************
+    # PRESS
+    def addSel_obj(self):
+        self.wgUtil.lineObject.setText(cmds.ls(sl=1,sn=True)[0])
 
-    def start(self):
-        self.ui_elem()
+    def addSel_inner(self):
+        for face in cmds.ls(sl=1,sn=True):
+            self.wgUtil.listInner.addItem(face)
 
-UI = SSM_UI()
-UI.start()
+    def removeSel_inner(self):
+        items = self.wgUtil.listInner.selectedItems()
+        for item in items:
+            row = self.wgUtil.listInner.row(item)
+            self.wgUtil.listInner.takeItem(row)
+
+    def clear_inner(self):
+        self.wgUtil.listInner.clear()
+
+    def addSel_outer(self):
+        for face in cmds.ls(sl=1,sn=True):
+            self.wgUtil.listOuter.addItem(face)
+    
+    def removeSel_outer(self):
+        items = self.wgUtil.listOuter.selectedItems()
+        for item in items:
+            row = self.wgUtil.listOuter.row(item)
+            self.wgUtil.listOuter.takeItem(row)
+
+    def clear_outer(self):
+        self.wgUtil.listOuter.clear()
+        
+#*******************************************************************
+# START
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    classVar = singleSidedGeoUI()
+    app.exec_()

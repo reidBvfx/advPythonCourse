@@ -6,6 +6,7 @@
 # needed  = 
 #           - simplify nested for loops for finding mirrored faces/verts
 #           - make functional if a seam is single sided
+# author  = Reid Bryan (reidwarhola@gmail.com)
 #**********************************************************************************
 
 import json
@@ -14,6 +15,8 @@ import os
 import sys
 
 import maya.cmds as cmds # type: ignore
+__file__ = 'C:\\Users\\apoll\\Desktop\\advPythonCourse\\5_app\\'
+
 sys.path.append(os.path.dirname(__file__))
 from DSObject import DSObject as ds
 
@@ -26,6 +29,7 @@ class vertexInfo():
         self.matchedVertsDict = cloth.alreadyMatched()
         #path to export matching verts Dict
         self.json_pathWrite = os.path.join(os.path.dirname(__file__), 'configFiles//jacketMirroredVerts.json')
+        self.locationFaceD = {}
          
     def faceToVert(self, faces):
         """ Convert list of faces into list of corresponding vertices
@@ -52,14 +56,23 @@ class vertexInfo():
     def getMirrorFace(self, face):
         """ Finds corresponding outer face to the given inner face """
         
-        faceLoc = cmds.xform(face, t = True, q = True)
+        try:
+            faceLoc = self.locationFaceD[face]
+        except: 
+            faceLoc = cmds.xform(face, t = True, q = True)
+        
         smallestDiff = 2
         matchFace = ""
         rangeL = len(faceLoc)
 
         # find face with the closest matching bounding box on 2 planes
         for oFace in self.unMatchedFaces:
-            oFaceLoc = cmds.xform(oFace, t = True, q = True)
+            try:
+                oFaceLoc = self.locationFaceD[face]
+            except: 
+                oFaceLoc = cmds.xform(face, t = True, q = True)
+        
+            #oFaceLoc = cmds.xform(oFace, t = True, q = True)
             #edge faces have 9 others have 6
            
             if(len(oFaceLoc) != rangeL):
@@ -190,7 +203,7 @@ class vertexInfo():
         with open(self.json_pathWrite, 'w') as outfile:
             json.dump(vertDictContainer, outfile, indent=4)
 
-jacket = ds(os.path.join(os.path.dirname(__file__), 'JacketMirroredVerts.json'))
+jacket = ds(os.path.join(os.path.dirname(__file__), '//configFiles//jacketData.json'))
     #r"C:\Users\apoll\Desktop\advPythonCourse\5_app\objectData_militaryJacket.json")
 VertexInfo = vertexInfo(jacket)
 VertexInfo.start()
