@@ -75,7 +75,7 @@ image: none;
  }
 </string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,4,0,4,0">
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,4,4,0">
    <property name="topMargin">
     <number>0</number>
    </property>
@@ -180,17 +180,20 @@ image: none;
     </layout>
    </item>
    <item>
-    <widget class="QPushButton" name="btnInnerFaces">
-     <property name="styleSheet">
-      <string notr="true">background-color: rgb(136, 105, 105);</string>
+    <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0">
+     <property name="topMargin">
+      <number>0</number>
      </property>
-     <property name="text">
-      <string>Inner Faces</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0">
+     <item>
+      <widget class="QPushButton" name="btnInnerFaces">
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(136, 105, 105);</string>
+       </property>
+       <property name="text">
+        <string>Inner Faces</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QFrame" name="frame">
        <property name="styleSheet">
@@ -257,17 +260,20 @@ image: none;
     </layout>
    </item>
    <item>
-    <widget class="QPushButton" name="btnOuterFaces">
-     <property name="styleSheet">
-      <string notr="true">background-color: rgb(136, 105, 105);</string>
+    <layout class="QVBoxLayout" name="verticalLayout_6" stretch="0,0">
+     <property name="topMargin">
+      <number>0</number>
      </property>
-     <property name="text">
-      <string>Outer Faces</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <layout class="QVBoxLayout" name="verticalLayout_6" stretch="0">
+     <item>
+      <widget class="QPushButton" name="btnOuterFaces">
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(136, 105, 105);</string>
+       </property>
+       <property name="text">
+        <string>Outer Faces</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QFrame" name="frame_2">
        <property name="styleSheet">
