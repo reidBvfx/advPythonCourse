@@ -9,77 +9,126 @@
 #**********************************************************************************
 
 import maya.cmds as cmds #type: ignore
+import maya.OpenMayaUI as omui#type: ignore
 
 import os
 import sys
-import webbrowser
+
 
 from Qt import QtWidgets, QtGui, QtCore, QtCompat
+from shiboken2 import *
+
+# don't delete!!!!doesn't work otherwise ----------------------------------
+mw_ptr = omui.MQtUtil.mainWindow()
+mayaMainWindow = wrapInstance(int(mw_ptr), QtWidgets.QMainWindow)
+#--------------------------------------------------------------------------
+
+try:
+    test = __file__
+except NameError:
+    MY_SCRIPT_PATH = "C:\\Users\\apoll\\Desktop\\advPythonCourse\\5_app"
+    if MY_SCRIPT_PATH not in sys.path:
+        sys.path.append(MY_SCRIPT_PATH)
+
+from DSObject import DSObject
+import singleSidedGeoUI as script
 
 #*******************************************************************
 # VARIABLE
-TITLE = os.path.splitext(os.path.basename(__file__))[0]
+try:
+    TITLE = os.path.splitext(os.path.basename(__file__))[0]
+except NameError:
+    TITLE = os.path.splitext(script.__file__)[0]
+    __file__ = os.path.splitext(script.__file__)[0]
 
+print(TITLE)
+#print("/".join([os.path.dirname(__file__), "ui", TITLE + ".ui"]))
 #*******************************************************************
 # CLASS
-class singleSidedGeoUI():
-    def __init__(self):
+class singleSidedGeoUI(QtWidgets.QDialog):
+    def __init__(self, *args, **kwargs):
+        super(singleSidedGeoUI, self).__init__(*args, **kwargs)
         # BUILD local ui path
-        path_ui = "/".join([os.path.dirname(__file__), "ui", TITLE + ".ui"])
-
+        
+        try:
+            path_ui = "/".join([os.path.dirname(__file__), "ui", TITLE + ".ui"])
+        except:
+             path_ui = "/".join([os.path.dirname(script.__file__), "ui", TITLE + ".ui"])
+ 
         # LOAD ui with absolute path
-        self.wgUtil = QtCompat.loadUi(path_ui)
+        QtCompat.loadUi(path_ui, self)
 
         # BUTTONS***********************************************************************
-        self.wgUtil.btnAddSelectedObject.clicked.connect(self.addSel_obj)
+        self.btnAddSelectedObject.clicked.connect(self.addSel_obj)
         
         # for inner faces
-        self.wgUtil.btnAddSelectedInner.clicked.connect(self.addSel_inner)
-        self.wgUtil.btnRemoveInner.clicked.connect(self.removeSel_inner)
-        self.wgUtil.btnClearAllInner.clicked.connect(self.clear_inner)
+        self.btnAddSelectedInner.clicked.connect(self.addSel_inner)
+        self.btnRemoveInner.clicked.connect(self.removeSel_inner)
+        self.btnClearAllInner.clicked.connect(self.clear_inner)
 
         # for outer faces
-        self.wgUtil.btnAddSelectedOuter.clicked.connect(self.addSel_outer)
-        self.wgUtil.btnRemoveOuter.clicked.connect(self.removeSel_outer)
-        self.wgUtil.btnClearAllOuter.clicked.connect(self.clear_outer)
+        self.btnAddSelectedOuter.clicked.connect(self.addSel_outer)
+        self.btnRemoveOuter.clicked.connect(self.removeSel_outer)
+        self.btnClearAllOuter.clicked.connect(self.clear_outer)
         
         # SHOW the UI
-        self.wgUtil.show()
+        self.show()
+        self.resize(500, 500)
 
     #************************************************************
     # PRESS
     def addSel_obj(self):
-        self.wgUtil.lineObject.setText(cmds.ls(sl=1,sn=True)[0])
+        name = cmds.ls(sl=1,sn=True)[0]
+        self.lineObject.setText(name)
+        try:
+            self.doubleObj.setName(name)
+        except AttributeError:
+            self.doubleObj = DSObject(name)
 
     def addSel_inner(self):
-        for face in cmds.ls(sl=1,sn=True):
-            self.wgUtil.listInner.addItem(face)
+        faces = cmds.ls(sl=1,sn=True)
+        faces = self.doubleObj.setInnerFaceList(faces)
+        for face in faces:
+            self.listInner.addItem(face)
 
     def removeSel_inner(self):
-        items = self.wgUtil.listInner.selectedItems()
+        items = self.listInner.selectedItems()
         for item in items:
-            row = self.wgUtil.listInner.row(item)
-            self.wgUtil.listInner.takeItem(row)
+            row = self.listInner.row(item)
+            self.listInner.takeItem(row)
+            self.doubleObj.removeInnerFace(row)
 
     def clear_inner(self):
-        self.wgUtil.listInner.clear()
+        self.listInner.clear()
+        self.doubleObj.clearInnerFaces()
 
     def addSel_outer(self):
-        for face in cmds.ls(sl=1,sn=True):
-            self.wgUtil.listOuter.addItem(face)
+        faces = cmds.ls(sl=1,sn=True)
+        faces = self.doubleObj.setOuterFaceList(faces)
+        for face in faces:
+            self.listOuter.addItem(face)
     
     def removeSel_outer(self):
-        items = self.wgUtil.listOuter.selectedItems()
+        items = self.listOuter.selectedItems()
         for item in items:
-            row = self.wgUtil.listOuter.row(item)
-            self.wgUtil.listOuter.takeItem(row)
+            row = self.listOuter.row(item)
+            self.doubleObj.removeOuterFace(row)
+            self.listOuter.takeItem(row)
 
     def clear_outer(self):
-        self.wgUtil.listOuter.clear()
-        
-#*******************************************************************
-# START
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    classVar = singleSidedGeoUI()
-    app.exec_()
+        self.listOuter.clear()
+    
+def getMainWindow():
+    mw_ptr = omui.MQtUtil.mainWindow()
+    mayaMainWindow = wrapInstance(int(mw_ptr), QtWidgets.QMainWindow)
+    return mayaMainWindow
+
+def show():
+    win = singleSidedGeoUI(parent = getMainWindow())
+    win.setWindowFlags(QtCore.Qt.Window)
+    win.show()  
+    win = None
+
+
+show()
+

@@ -10,26 +10,35 @@
 import json
 import re
 import os
-__file__ = 'C:\\Users\\apoll\\Desktop\\advPythonCourse\\5_app\\'
+from abc import ABC
+
 #import maya.cmds as cmds #type: ignore
 
-class DSObject():
+class DSObjectJSON():
     def __init__(self, path):
         # path to get object info
         self.json_path = path
-        
+        print("DSJSON called")
         # read json file
-        with open(self.json_path) as json_file:
-            objectData = json.load(json_file) 
-        """Used config file because each object has a large amount of data set up in an easily callable way
-            having all the data within a py file would make it hard to parse and edit"""
-        
-        self.objName = objectData['objectName'] 
-        self.simObjName = objectData['simObjectName']
-        self.simShapeName = self.simObjName + "Shape"
+        try:
+            with open(self.json_path) as json_file:
+                objectData = json.load(json_file) 
+            """Used config file because each object has a large amount of data set up in an easily callable way
+                having all the data within a py file would make it hard to parse and edit"""
+            self.objName = objectData['objectName'] 
+            self.simObjName = objectData['simObjectName']
+            self.simShapeName = self.simObjName + "Shape"
 
-        self.outerFaces = self.correctNameFace(objectData['outerFaces'])
-        self.innerFaces = self.correctNameFace(objectData['innerFaces'])
+            self.outerFaces = self.correctNameFace(objectData['outerFaces'])
+            self.innerFaces = self.correctNameFace(objectData['innerFaces'])
+        except FileNotFoundError:
+                
+            self.objName = path
+            self.simObjName = ""
+            self.simShapeName = ""
+
+            self.outerFaces = []
+            self.innerFaces = []
 
     def correctNameFace(self, facesList):
         """ removed range from bracket [x:y] and inserts value in range into new list"""
@@ -101,7 +110,7 @@ class DSObject():
         Returns:
             name of duplicated mesh
         """
-        simMesh =cmds.duplicate(obj, n = (obj + "_SIM"))[0]
+        simMesh = cmds.duplicate(obj, n = (obj + "_SIM"))[0]
         
         # select all but inner face mesh
         cmds.select( clear=True )#clear anything selected
@@ -115,8 +124,55 @@ class DSObject():
         # cmds.delete(simMesh, constructionHistory = True)
 
         return simMesh
+    
+    def removeDuplicates(self, list, temp = [],):
+        for each in temp:
+            if each in list:
+                temp.remove(each)
+        return temp
+
+class DSObject(DSObjectJSON, ABC):
+    def __init__(self, name):
+          super().__init__(name)
+          self.objName = name
+          print("DSobj called")
+
+    def setName(self,name):
+        self.objName = name
+
+    # inner faces commands ###################################
+    def setInnerFaceList(self, faces):
+        newList = self.correctNameFace(faces)
+        newList = self.removeDuplicates(self.innerFaces, newList)
+        for each in newList:
+            self.innerFaces.append(each) 
+        return newList
+
+    def clearInnerFaces(self):
+        self.innerFaces = []
+        
+    def removeInnerFace(self, index):
+        self.innerFaces.pop(index)
+
+    # outer faces commands ################################### 
+    def setOuterFaceList(self, faces):
+        newList = self.correctNameFace(faces)
+        newList = self.removeDuplicates(self.outerFaces, newList)
+        for each in newList:
+            self.outerFaces.append(each) 
+        self.removeDuplicates(self.outerFaces)    
+        return newList
+    
+    def removeOuterFace(self, index):
+        self.outerFaces.pop(index)
+
+    def clearOuterFaces(self):
+        self.outerFaces = []
 
 
-militaryJacket = DSObject(os.path.join(os.path.dirname(__file__), 'configFiles//jacketData.json'))
+m = DSObject("hi")
+
+militaryJacket = DSObjectJSON(os.path.join(os.path.dirname(__file__), 'configFiles//jacketData.json'))
+
 
 
