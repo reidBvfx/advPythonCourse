@@ -13,22 +13,27 @@ import json
 import time
 import os 
 import sys
-
+from copy import copy 
+import pprint 
 import maya.cmds as cmds # type: ignore
 __file__ = 'C:\\Users\\apoll\\Desktop\\advPythonCourse\\5_app\\'
 
 sys.path.append(os.path.dirname(__file__))
-from DSObject import DSObject as ds
+from DSObjectJSON import DSObjectJSON as ds
 
-class vertexInfo():
+class getVertexInfo():
     def __init__(self, cloth):
         self.cloth = cloth
-        
-        self.unMatchedFaces = cloth.getInnerFaces()
+        self.unMatchedFaces = copy(self.cloth.getOuterFaces())
         self.matchedFacesDict = {}
-        self.matchedVertsDict = cloth.alreadyMatched()
+        try:
+            self.matchedVertsDict = self.cloth.alreadyMatched()
+        except AttributeError:
+            self.matchedVertsDict = {}
+
+        writePath = 'configFiles//' + cloth.getName() + '.json'
         #path to export matching verts Dict
-        self.json_pathWrite = os.path.join(os.path.dirname(__file__), 'configFiles//jacketMirroredVerts.json')
+        self.json_pathWrite = os.path.join(os.path.dirname(__file__), writePath)
         self.locationFaceD = {}
          
     def faceToVert(self, faces):
@@ -55,7 +60,6 @@ class vertexInfo():
 
     def getMirrorFace(self, face):
         """ Finds corresponding outer face to the given inner face """
-        
         try:
             faceLoc = self.locationFaceD[face]
         except: 
@@ -71,7 +75,6 @@ class vertexInfo():
                 oFaceLoc = self.locationFaceD[face]
             except: 
                 oFaceLoc = cmds.xform(face, t = True, q = True)
-        
             #oFaceLoc = cmds.xform(oFace, t = True, q = True)
             #edge faces have 9 others have 6
            
@@ -93,13 +96,12 @@ class vertexInfo():
             if(diff < smallestDiff):
                 matchFace = oFace
                 smallestDiff = diff
-
         try:
             self.unMatchedFaces.remove(matchFace) 
             self.matchedFacesDict[face] = matchFace  
         except:
             print("Error with " + face + "because " + matchFace + " not in dictionary")    
-             
+            
         return matchFace   
 
     def moveAllVerts(self):
@@ -108,10 +110,10 @@ class vertexInfo():
             innerVerts = self.faceToVert(key)
             self.outerVerts = []
             self.outerVerts = self.faceToVert(self.matchedFacesDict[key])
-            
+
             for each in innerVerts:
                 self.findMirrorVert(each, self.outerVerts)
-   
+
         # all matching verts are in dict so find center
         for keyVert in self.matchedVertsDict:
             center = self.findCenter(keyVert, self.matchedVertsDict[keyVert])
@@ -158,19 +160,19 @@ class vertexInfo():
         """
         inner =cmds.xform(innerv, t = True, q = True)
         outer = cmds.xform(outerv, t = True, q = True)
-        if (abs(outer[0] - inner[0]) < .2):
+        if (abs(outer[0] - inner[0]) < .01):
             x = inner[0]
  
         else:
             x = outer[0] - ((outer[0] - inner[0])/2)
        
-        if (abs(outer[1] - inner[1]) < .1):
+        if (abs(outer[1] - inner[1]) < .01):
             y = inner[1]
         else:
             y = (outer[1] - inner[1])/2 
             y = inner[1] + y
         
-        if (abs(outer[2] - inner[2]) < .1):
+        if (abs(outer[2] - inner[2]) < .01):
             z = inner[2]
 
         else:
@@ -180,30 +182,41 @@ class vertexInfo():
         return([x, y, z])
                 
     def start(self):
-        """Tested on geo from : https://www.turbosquid.com/3d-models/military-uniform-2418050 """
-        print(self.matchedVertsDict)
-        # #for each in self.innerFaces:
-        # #self.getMirrorFace(each)
-        
+        """Tested on geo from : https://www.turbosquid.com/3d-models/military-uniform-2418050 """   
         start = time.time()
-        innerFacesList = self.cloth.getInnerFaces()
+        try:
+            cmds.select(self.cloth.getName() + "_SIM")
+        except:
+            self.cloth.createSimMesh()
+        self.innerFacesList = self.cloth.getInnerFaces()
         
-        for i in range(300):
-            self.getMirrorFace(innerFacesList [i])
-            
+        x = len(self.innerFacesList)
+        for i in range(100):
+            try:
+                x = self.innerFacesList[i]
+                self.getMirrorFace(self.innerFacesList[i])
+            except IndexError:
+                print("error: " + str(i))
+            finally:
+                i += 1
+        #pprint.pprint(self.matchedFacesDict)
         self.moveAllVerts()    
-        end = time.time()
-        print("time " + str(end-start))
-        # print(self.matchedFacesDict)
-        # print(self.matchedVertsDict)
+        
 
         vertDictContainer = {}
-        vertDictContainer[self.cloth.objectName] = self.matchedVertsDict
+        vertDictContainer[self.cloth.getName()] = self.matchedVertsDict
 
-        with open(self.json_pathWrite, 'w') as outfile:
-            json.dump(vertDictContainer, outfile, indent=4)
+        # with open(self.json_pathWrite, 'w') as outfile:
+        #     json.dump(vertDictContainer, outfile, indent=4)
 
-jacket = ds(os.path.join(os.path.dirname(__file__), '//configFiles//jacketData.json'))
-    #r"C:\Users\apoll\Desktop\advPythonCourse\5_app\objectData_militaryJacket.json")
-VertexInfo = vertexInfo(jacket)
-VertexInfo.start()
+        self.cloth.deleteFaces()
+        end = time.time()
+        print("time " + str(end-start))
+
+def test():
+    jacket = ds(os.path.join(os.path.dirname(__file__), 'configFiles\jacketData.json'))
+        #r"C:\Users\apoll\Desktop\advPythonCourse\5_app\objectData_militaryJacket.json")
+    VertexInfo = getVertexInfo(jacket)
+    #VertexInfo.start()
+
+#test()

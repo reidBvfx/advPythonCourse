@@ -18,11 +18,12 @@ import sys
 from Qt import QtWidgets, QtGui, QtCore, QtCompat
 from shiboken2 import *
 
+
+
 # don't delete!!!!doesn't work otherwise ----------------------------------
 mw_ptr = omui.MQtUtil.mainWindow()
 mayaMainWindow = wrapInstance(int(mw_ptr), QtWidgets.QMainWindow)
 #--------------------------------------------------------------------------
-
 try:
     test = __file__
 except NameError:
@@ -31,18 +32,20 @@ except NameError:
         sys.path.append(MY_SCRIPT_PATH)
 
 from DSObject import DSObject
+from getVertexInfo import getVertexInfo
 import singleSidedGeoUI as script
 
 #*******************************************************************
 # VARIABLE
 try:
     TITLE = os.path.splitext(os.path.basename(__file__))[0]
+    if(TITLE == ""):
+        raise NameError
 except NameError:
-    TITLE = os.path.splitext(script.__file__)[0]
-    __file__ = os.path.splitext(script.__file__)[0]
+    TITLE = os.path.splitext(os.path.basename(script.__file__))[0]
 
-print(TITLE)
-#print("/".join([os.path.dirname(__file__), "ui", TITLE + ".ui"]))
+TITLE = os.path.splitext(os.path.basename(script.__file__))[0]
+
 #*******************************************************************
 # CLASS
 class singleSidedGeoUI(QtWidgets.QDialog):
@@ -71,6 +74,9 @@ class singleSidedGeoUI(QtWidgets.QDialog):
         self.btnRemoveOuter.clicked.connect(self.removeSel_outer)
         self.btnClearAllOuter.clicked.connect(self.clear_outer)
         
+        # create
+        self.btnCreate.clicked.connect(self.create)
+
         # SHOW the UI
         self.show()
         self.resize(500, 500)
@@ -117,7 +123,14 @@ class singleSidedGeoUI(QtWidgets.QDialog):
 
     def clear_outer(self):
         self.listOuter.clear()
-    
+        self.doubleObj.clearOuterFaces()
+    # create
+    def create(self):
+        #print("length Inner : " + str((len(self.doubleObj.getInnerFaces()))))
+        VI = getVertexInfo(self.doubleObj)
+        VI.start()
+        #print("pressed start")
+
 def getMainWindow():
     mw_ptr = omui.MQtUtil.mainWindow()
     mayaMainWindow = wrapInstance(int(mw_ptr), QtWidgets.QMainWindow)
