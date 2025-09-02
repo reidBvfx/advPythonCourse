@@ -24,12 +24,12 @@ from shiboken2 import *
 mw_ptr = omui.MQtUtil.mainWindow()
 mayaMainWindow = wrapInstance(int(mw_ptr), QtWidgets.QMainWindow)
 #--------------------------------------------------------------------------
-try:
-    test = __file__
-except NameError:
-    MY_SCRIPT_PATH = "C:\\Users\\apoll\\Desktop\\advPythonCourse\\5_app"
-    if MY_SCRIPT_PATH not in sys.path:
-        sys.path.append(MY_SCRIPT_PATH)
+# try:
+#     test = __file__
+# except NameError:
+#     MY_SCRIPT_PATH = "C:\\Users\\apoll\\Desktop\\advPythonCourse\\5_app"
+#     if MY_SCRIPT_PATH not in sys.path:
+#         sys.path.append(MY_SCRIPT_PATH)
 
 from DSObject import DSObject
 from DSObjectJSON import DSObjectJSON
@@ -38,8 +38,6 @@ import singleSidedGeoUI as script
 
 #*******************************************************************
 # VARIABLE
-TITLE = os.path.splitext(os.path.basename(script.__file__))[0]
-
 TITLE = os.path.splitext(os.path.basename(script.__file__))[0]
 
 #*******************************************************************
@@ -128,24 +126,40 @@ class singleSidedGeoUI(QtWidgets.QDialog):
     
     def incrementProgress(self, v):
         self.progressBar.setValue(v)
+    
     # create
     def create(self):
-        #print("length Inner : " + str((len(self.doubleObj.getInnerFaces()))))
-        self.VI = getVertexInfo(self.doubleObj)
-        self.VI.start()
-        #print("pressed start")
+        try:   
+            self.VI.start()
+            print("restart")
+        except: 
+            print("new start")
+            self.VI = getVertexInfo(self.doubleObj, self)
+            self.VI.start()
 
     def load(self):
-        options = QtWidgets.QFileDialog.Options()
-        self.fileReadName, _ = QtWidgets.QFileDialog.getOpenFileName(self,"Load JSON", "","All Files (*)", options=options)
-        if self.fileReadName:
-            print(self.fileReadName)
-            self.doubleObj = DSObjectJSON(self.fileReadName)
-            self.lineObject.setText(self.doubleObj.getName())
-            for face in self.doubleObj.getInnerFaces():
-                self.listInner.addItem(face)
-            for face in self.doubleObj.getOuterFaces():
-                self.listOuter.addItem(face)
+        if self.btnLoad.text() == "Unload":
+            self.unload()
+        else:
+            options = QtWidgets.QFileDialog.Options()
+            self.fileReadName, _ = QtWidgets.QFileDialog.getOpenFileName(self,"Load JSON", "","All Files (*)", options=options)
+            if self.fileReadName:
+                print("Loading " + self.fileReadName)
+                self.doubleObj = DSObjectJSON(self.fileReadName)
+                self.lineObject.setText(self.doubleObj.getName())
+                for face in self.doubleObj.getInnerFaces():
+                    self.listInner.addItem(face)
+                for face in self.doubleObj.getOuterFaces():
+                    self.listOuter.addItem(face)
+
+                self.btnLoad.setStyleSheet('background-color: Red;')
+                self.btnLoad.setText("Unload")
+
+    def unload(self):
+        self.doubleObj.setPath(" ")
+        self.doubleObj.setMatched(" ")
+        self.btnLoad.setStyleSheet('background-color:  rgb(110, 110, 110);')
+        self.btnLoad.setText("Load")
 
     def saveFileDialog(self):
         file_dialog = QtWidgets.QFileDialog(self)
@@ -155,7 +169,7 @@ class singleSidedGeoUI(QtWidgets.QDialog):
 
         if file_dialog.exec():
             selected_file = file_dialog.selectedFiles()[0]
-            print("Selected File for Saving:", selected_file)
+            
             try:
                 self.VI.writeJSON(self.fileReadName,selected_file)
             except AttributeError: 
@@ -164,7 +178,7 @@ class singleSidedGeoUI(QtWidgets.QDialog):
                     self.VI.writeJSON(self.fileReadName,selected_file)
                 except:
                     self.VI.writeJSON(selected_file)
-            
+            print("Saved at: ", selected_file)
                 
 
 def getMainWindow():

@@ -68,10 +68,13 @@ class DSObject():
     # helper functs 
     def findNumber(self, vert):
         """ take vertex name and return int inside the brackets"""
-        nPCompile = re.compile(r'(\d+)') 
-        number = nPCompile.findall(vert)[0]
-        return number
-    
+        try:
+            nPCompile = re.compile(r'(\d+)') 
+            number = nPCompile.findall(vert)[0]
+            return number
+        except:
+            return  
+        
     def removeDuplicates(self, list, comp = []):
         temp =[]
         for each in comp:
@@ -128,12 +131,22 @@ class DSObject():
         # select all but inner face mesh
         cmds.select( clear=True )#clear anything selected
         cmds.select(self.simShapeName + ".f[*]")#select all faces
-        
         # deselect all inner faces
+        faceNum = []
         for face in self.innerFaces:
-            faceSelect = (self.simShapeName + ".f[" + str(self.findNumber(face)) + "]")
-            cmds.select(faceSelect, d = True)
+            faceNum.append(str(self.findNumber(face)))
+        faceSelect = []
+        for num in faceNum:
+            try:    
+                faceSelect.append(self.simShapeName + ".f[" + num + "]") 
+            except:
+                print("error")
+                pass
+        cmds.select(faceSelect, d = True)  
         cmds.delete()
+
+        
+        
         # cmds.delete(simMesh, constructionHistory = True)
         
 

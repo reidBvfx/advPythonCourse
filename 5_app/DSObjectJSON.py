@@ -19,23 +19,23 @@ class DSObjectJSON(DSObject, ABC):
         """Used config file because each object has a large amount of data set up in an easily callable way
             having all the data within a py file would make it hard to parse and edit"""
         super().__init__(self.objectData['objectName'])
-        #self.objName = objectData['objectName'] 
         self.simObjName = self.objectData['simObjectName']
         self.simShapeName = self.simObjName + "Shape"
 
         self.outerFaces = self.correctNameFace(self.objectData['outerFaces'])
         self.innerFaces = self.correctNameFace(self.objectData['innerFaces'])
 
-    
     def setMatched(self, jsonFile):
          self.matchedVertPath = jsonFile
+
+    def setPath(self, newPath):
+        self.json_path = newPath
 
     def alreadyMatched(self):
         """ if getVertexInfo has already created a JSON file of matchedVerts it will 
         return the dictionary otherwise a empty dictonary"""
         dict = {}
         #change to check orginal JSON
-        #print("testing")
         try:
             with open(self.json_path) as json_file:
                 self.objectData = json.load(json_file) 
@@ -43,20 +43,11 @@ class DSObjectJSON(DSObject, ABC):
         except:
             return False
         
-        
-        #print("True")
         if testData:
-            return False
-        else:
+
             return True
-        # try:
-        #     with open(self.matchedVertPath) as json_file:
-        #         objectData = json.load(json_file) 
-            
-        #     self.matchedVertDict = objectData[self.objectName]
-        #     return self.matchedVertDict
-        # except:
-        #      return dict
+        else:
+            return False
 
     def getVertsDict(self):
         return self.objectData['matchedVerts']

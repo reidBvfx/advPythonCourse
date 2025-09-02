@@ -20,10 +20,12 @@ __file__ = 'C:\\Users\\apoll\\Desktop\\advPythonCourse\\5_app\\'
 
 sys.path.append(os.path.dirname(__file__))
 from DSObjectJSON import DSObjectJSON as ds
+#import singleSidedGeoUI 
 
 class getVertexInfo():
-    def __init__(self, cloth):
+    def __init__(self, cloth, ssg):
         self.cloth = cloth
+        self.ssg = ssg
         self.unMatchedFaces = copy(self.cloth.getOuterFaces())
         self.matchedFacesDict = {}
         try:
@@ -71,7 +73,6 @@ class getVertexInfo():
         smallestDiff = 2
         matchFace = ""
         rangeL = len(faceLoc)
-        print(len(self.unMatchedFaces))
         # find face with the closest matching bounding box on 2 planes
         for oFace in self.unMatchedFaces:
             try:
@@ -114,6 +115,8 @@ class getVertexInfo():
 
     def moveAllVerts(self):
         # get matching verts for every face in dictonary
+        i = 0
+        x = len(self.matchedFacesDict)
         for key in self.matchedFacesDict:
             innerVerts = self.faceToVert(key)
             self.outerVerts = []
@@ -121,21 +124,32 @@ class getVertexInfo():
 
             for each in innerVerts:
                 self.findMirrorVert(each, self.outerVerts)
-
+            self.ssg.incrementProgress(25 + int((25*i)/x))
+            i += 1
         # all matching verts are in dict so find center
+        i = 0
+        x = len(self.matchedVertsDict)
         for keyVert in self.matchedVertsDict:
             center = self.findCenter(keyVert, self.matchedVertsDict[keyVert])
             vNumber = self.cloth.findNumber(keyVert)
             dupV = f"{self.cloth.simShapeName}.vtx[{vNumber}]"
             cmds.xform(dupV, t = center)
+            self.ssg.incrementProgress(50 + int((25*i)/x))
+            i += 1
     
     def moveLoadedVerts(self):
+        i = 0
+        x = len(self.matchedVertsDict)
+        
         for keyVert in self.matchedVertsDict:
+            #print("key : " + keyVert + "value: " + self.matchedVertsDict[keyVert] )
+            #pprint.pprint(outerv)
             center = self.findCenter(keyVert, self.matchedVertsDict[keyVert])
             vNumber = self.cloth.findNumber(keyVert)
             dupV = f'{self.cloth.simShapeName}.vtx[{vNumber}]'
             cmds.xform(dupV, t = (center))
-
+            self.ssg.incrementProgress(50 + int((50*i)/x))
+            i += 1
     
     def findMirrorVert(self, v, vertsList):
         """Compares location of vert closest to being mirror across 2 axises """
@@ -148,7 +162,6 @@ class getVertexInfo():
         vLoc = cmds.xform(v, t = True, q = True)
         smallestDiff = 10
         matchVert = ""
-        print("vert: " + str(len(vertsList)))
         for vert in vertsList:
             vertLoc = cmds.xform(vert, t = True, q = True)
             match = 0
@@ -176,38 +189,22 @@ class getVertexInfo():
         Returns:
               - list of x, y, and z coordinates
         """
-        inner =cmds.xform(innerv, t = True, q = True)
+
+        inner = cmds.xform(innerv, t = True, q = True)
         outer = cmds.xform(outerv, t = True, q = True)
         x = outer[0] - ((outer[0] - inner[0])/2)
-        y = (outer[1] - inner[1])/2 
-        y = inner[1] + y
-        z = (outer[2] - inner[2])/2
-        z = (inner[2]) + z
-        # if (abs(outer[0] - inner[0]) < .01):
-        #     x = inner[0]
- 
-        # else:
-        #     x = outer[0] - ((outer[0] - inner[0])/2)
-       
-        # if (abs(outer[1] - inner[1]) < .01):
-        #     y = inner[1]
-        # else:
-        #     y = (outer[1] - inner[1])/2 
-        #     y = inner[1] + y
-        
-        # if (abs(outer[2] - inner[2]) < .01):
-        #     z = inner[2]
-
-        # else:
-        #     z = (outer[2] - inner[2])/2
-        #     z = (inner[2]) + z
+        y = inner[1] + ((outer[1] - inner[1])/2 )
+        z = (inner[2]) + ((outer[2] - inner[2])/2)
+     
         return([x, y, z])
 
     def writeJSON(self, readName = "", fileName = ""):
+        
         if fileName == "": 
             fileName =self.json_pathWrite
         if ".json" not in fileName:
             fileName = fileName + ".json"
+        
         try:
             with open(readName) as json_file:
                 objectData = json.load(json_file) 
@@ -226,58 +223,57 @@ class getVertexInfo():
             objectData['outerFaces'] = self.cloth.getOuterFaces()
 
             vertDictContainer = {}
-            vertDictContainer[self.cloth.getName()] = self.matchedVertsDict
-
-            objectData['matchedVerts'] = vertDictContainer
+            # vertDictContainer[self.cloth.getName()] = self.matchedVertsDict
+            objectData['matchedVerts'] = self.matchedVertsDict
 
         with open(fileName, 'w') as outfile:
             json.dump(objectData, outfile, indent=4) 
   
     def start(self):
         """Tested on geo from : https://www.turbosquid.com/3d-models/military-uniform-2418050 """   
+        
         start = time.time()
         try:
             cmds.select(self.cloth.getName() + "_SIM")
-            print("selected")
+            
         except:
             self.cloth.createSimMesh()
         
+        self.unMatchedFaces = copy(self.cloth.getOuterFaces())
         ready = self.cloth.alreadyMatched()
+        # if ready mean file is loaded with matchedVerts already found
         if ready:
-
             self.matchedVertsDict = self.cloth.getVertsDict()
-            print("found")
+            self.ssg.incrementProgress(50)
+            print("found list")
             self.moveLoadedVerts()
-            #self.cloth.deleteFaces()
-            #end = time.time()
-            #print("time " + str(end-start))
         else:
             self.innerFacesList = self.cloth.getInnerFaces()
             
             x = len(self.innerFacesList)
-            for i in range(200):
+            for i in range(x):
                 try:
                     # x = self.innerFacesList[i]
                     self.getMirrorFace(self.innerFacesList[i])
+                    self.ssg.incrementProgress(int((25*i)/x))
                 except IndexError:
                     print("error: " + str(i))
                 finally:
                     i += 1
-            #pprint.pprint(self.matchedFacesDict)
+            #self.ssg.incrementProgress(25)
             self.moveAllVerts()    
         
-
-        
-
-        
-
+        dend = time.time()
+        print("time before delete " + str(dend-start))
+        print("starting delete")
+        self.ssg.incrementProgress(90)
         self.cloth.deleteFaces()
+        self.ssg.incrementProgress(100)
         end = time.time()
         print("time " + str(end-start))
 
 def test():
     jacket = ds(os.path.join(os.path.dirname(__file__), 'configFiles\jacketData.json'))
-        #r"C:\Users\apoll\Desktop\advPythonCourse\5_app\objectData_militaryJacket.json")
     VertexInfo = getVertexInfo(jacket)
     #VertexInfo.start()
 
