@@ -15,16 +15,16 @@ class DSObjectJSON(DSObject, ABC):
         #print("DSJSON called")
         # read json file
         with open(self.json_path) as json_file:
-            objectData = json.load(json_file) 
+            self.objectData = json.load(json_file) 
         """Used config file because each object has a large amount of data set up in an easily callable way
             having all the data within a py file would make it hard to parse and edit"""
-        super().__init__(objectData['objectName'])
+        super().__init__(self.objectData['objectName'])
         #self.objName = objectData['objectName'] 
-        self.simObjName = objectData['simObjectName']
+        self.simObjName = self.objectData['simObjectName']
         self.simShapeName = self.simObjName + "Shape"
 
-        self.outerFaces = self.correctNameFace(objectData['outerFaces'])
-        self.innerFaces = self.correctNameFace(objectData['innerFaces'])
+        self.outerFaces = self.correctNameFace(self.objectData['outerFaces'])
+        self.innerFaces = self.correctNameFace(self.objectData['innerFaces'])
 
     
     def setMatched(self, jsonFile):
@@ -34,16 +34,32 @@ class DSObjectJSON(DSObject, ABC):
         """ if getVertexInfo has already created a JSON file of matchedVerts it will 
         return the dictionary otherwise a empty dictonary"""
         dict = {}
+        #change to check orginal JSON
+        #print("testing")
         try:
-            with open(self.matchedVertPath) as json_file:
-                objectData = json.load(json_file) 
-            
-            self.matchedVertDict = objectData[self.objectName]
-            return self.matchedVertDict
+            with open(self.json_path) as json_file:
+                self.objectData = json.load(json_file) 
+                testData = self.objectData['matchedVerts'] 
         except:
-             return dict
+            return False
+        
+        
+        #print("True")
+        if testData:
+            return False
+        else:
+            return True
+        # try:
+        #     with open(self.matchedVertPath) as json_file:
+        #         objectData = json.load(json_file) 
+            
+        #     self.matchedVertDict = objectData[self.objectName]
+        #     return self.matchedVertDict
+        # except:
+        #      return dict
 
-
+    def getVertsDict(self):
+        return self.objectData['matchedVerts']
     
     
     

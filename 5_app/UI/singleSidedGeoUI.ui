@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>670</width>
-    <height>450</height>
+    <height>479</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -85,35 +85,29 @@ image: none;
       <number>0</number>
      </property>
      <item>
-      <widget class="QToolButton" name="toolBtnSave">
+      <widget class="QPushButton" name="btnSave">
        <property name="text">
         <string>Save</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QToolButton" name="toolBtnTools">
+      <widget class="QPushButton" name="btnLoad">
        <property name="styleSheet">
         <string notr="true">text-align: left;</string>
        </property>
        <property name="text">
         <string>Load</string>
        </property>
-       <property name="popupMode">
-        <enum>QToolButton::InstantPopup</enum>
-       </property>
       </widget>
      </item>
      <item>
-      <widget class="QToolButton" name="toolBtnHelp">
+      <widget class="QPushButton" name="toolBtnHelp">
        <property name="styleSheet">
         <string notr="true">text-align: left;</string>
        </property>
        <property name="text">
         <string>Help</string>
-       </property>
-       <property name="popupMode">
-        <enum>QToolButton::InstantPopup</enum>
        </property>
       </widget>
      </item>
@@ -212,6 +206,9 @@ image: none;
            <number>0</number>
           </property>
           <item>
+           <widget class="QListWidget" name="listInner"/>
+          </item>
+          <item>
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
              <widget class="QPushButton" name="btnAddSelectedInner">
@@ -248,9 +245,6 @@ image: none;
              </spacer>
             </item>
            </layout>
-          </item>
-          <item>
-           <widget class="QListWidget" name="listInner"/>
           </item>
          </layout>
         </item>
@@ -292,6 +286,9 @@ image: none;
            <number>0</number>
           </property>
           <item>
+           <widget class="QListWidget" name="listOuter"/>
+          </item>
+          <item>
            <layout class="QVBoxLayout" name="verticalLayout_8">
             <item>
              <widget class="QPushButton" name="btnAddSelectedOuter">
@@ -329,9 +326,6 @@ image: none;
             </item>
            </layout>
           </item>
-          <item>
-           <widget class="QListWidget" name="listOuter"/>
-          </item>
          </layout>
         </item>
        </layout>
@@ -342,14 +336,27 @@ image: none;
    <item>
     <layout class="QVBoxLayout" name="vl_Ghosting" stretch="0">
      <item>
-      <layout class="QVBoxLayout" name="verticalLayout_5" stretch="1">
+      <layout class="QVBoxLayout" name="verticalLayout_5" stretch="1,0">
        <property name="bottomMargin">
         <number>0</number>
        </property>
        <item>
         <widget class="QPushButton" name="btnCreate">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>40</height>
+          </size>
+         </property>
          <property name="text">
-          <string>Create</string>
+          <string>CREATE</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QProgressBar" name="progressBar">
+         <property name="value">
+          <number>0</number>
          </property>
         </widget>
        </item>

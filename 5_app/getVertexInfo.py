@@ -27,8 +27,11 @@ class getVertexInfo():
         self.unMatchedFaces = copy(self.cloth.getOuterFaces())
         self.matchedFacesDict = {}
         try:
-            self.matchedVertsDict = self.cloth.alreadyMatched()
-        except AttributeError:
+            if self.cloth.alreadyMatched():
+                self.matchedVertsDict = self.cloth.getVertsDict()
+            else:
+                raise AttributeError
+        except (AttributeError, KeyError):
             self.matchedVertsDict = {}
 
         writePath = 'configFiles//' + cloth.getName() + '.json'
@@ -68,7 +71,7 @@ class getVertexInfo():
         smallestDiff = 2
         matchFace = ""
         rangeL = len(faceLoc)
-
+        print(len(self.unMatchedFaces))
         # find face with the closest matching bounding box on 2 planes
         for oFace in self.unMatchedFaces:
             try:
@@ -96,6 +99,11 @@ class getVertexInfo():
             if(diff < smallestDiff):
                 matchFace = oFace
                 smallestDiff = diff
+                if smallestDiff < .01 :
+                    self.unMatchedFaces.remove(matchFace) 
+                    self.matchedFacesDict[face] = matchFace  
+                    return matchFace   
+
         try:
             self.unMatchedFaces.remove(matchFace) 
             self.matchedFacesDict[face] = matchFace  
@@ -121,16 +129,26 @@ class getVertexInfo():
             dupV = f"{self.cloth.simShapeName}.vtx[{vNumber}]"
             cmds.xform(dupV, t = center)
     
+    def moveLoadedVerts(self):
+        for keyVert in self.matchedVertsDict:
+            center = self.findCenter(keyVert, self.matchedVertsDict[keyVert])
+            vNumber = self.cloth.findNumber(keyVert)
+            dupV = f'{self.cloth.simShapeName}.vtx[{vNumber}]'
+            cmds.xform(dupV, t = (center))
+
+    
     def findMirrorVert(self, v, vertsList):
         """Compares location of vert closest to being mirror across 2 axises """
-        #only run if matching vert has not already been found
-        if v in self.matchedVertsDict:
-            return
-            
+        # only run if matching vert has not already been found
+        try:
+            if v in self.matchedVertsDict:
+                return
+        except:
+            pass
         vLoc = cmds.xform(v, t = True, q = True)
         smallestDiff = 10
         matchVert = ""
-        
+        print("vert: " + str(len(vertsList)))
         for vert in vertsList:
             vertLoc = cmds.xform(vert, t = True, q = True)
             match = 0
@@ -144,8 +162,8 @@ class getVertexInfo():
                 i+=1
             
             if(diff < smallestDiff):
-                        matchVert = vert
-                        smallestDiff = diff
+                matchVert = vert
+                smallestDiff = diff
 
         self.matchedVertsDict[v] = matchVert
         self.outerVerts.remove(matchVert)       
@@ -160,54 +178,98 @@ class getVertexInfo():
         """
         inner =cmds.xform(innerv, t = True, q = True)
         outer = cmds.xform(outerv, t = True, q = True)
-        if (abs(outer[0] - inner[0]) < .01):
-            x = inner[0]
+        x = outer[0] - ((outer[0] - inner[0])/2)
+        y = (outer[1] - inner[1])/2 
+        y = inner[1] + y
+        z = (outer[2] - inner[2])/2
+        z = (inner[2]) + z
+        # if (abs(outer[0] - inner[0]) < .01):
+        #     x = inner[0]
  
-        else:
-            x = outer[0] - ((outer[0] - inner[0])/2)
+        # else:
+        #     x = outer[0] - ((outer[0] - inner[0])/2)
        
-        if (abs(outer[1] - inner[1]) < .01):
-            y = inner[1]
-        else:
-            y = (outer[1] - inner[1])/2 
-            y = inner[1] + y
+        # if (abs(outer[1] - inner[1]) < .01):
+        #     y = inner[1]
+        # else:
+        #     y = (outer[1] - inner[1])/2 
+        #     y = inner[1] + y
         
-        if (abs(outer[2] - inner[2]) < .01):
-            z = inner[2]
+        # if (abs(outer[2] - inner[2]) < .01):
+        #     z = inner[2]
 
-        else:
-            z = (outer[2] - inner[2])/2
-            z = (inner[2]) + z
-        
+        # else:
+        #     z = (outer[2] - inner[2])/2
+        #     z = (inner[2]) + z
         return([x, y, z])
-                
+
+    def writeJSON(self, readName = "", fileName = ""):
+        if fileName == "": 
+            fileName =self.json_pathWrite
+        if ".json" not in fileName:
+            fileName = fileName + ".json"
+        try:
+            with open(readName) as json_file:
+                objectData = json.load(json_file) 
+            vertDictContainer = {}
+        
+            vertDictContainer[self.cloth.getName()] = self.matchedVertsDict
+            objectData['matchedVerts'].append(vertDictContainer)
+            json_file.seek(0) 
+            # Write the updated data back to the file
+            json.dump(objectData, json_file, indent=4)
+        except:
+            objectData = {}
+            objectData['objectName'] = self.cloth.getName()
+            objectData['simObjectName'] = self.cloth.getName() + "_SIM"
+            objectData['innerFaces'] = self.cloth.getInnerFaces()
+            objectData['outerFaces'] = self.cloth.getOuterFaces()
+
+            vertDictContainer = {}
+            vertDictContainer[self.cloth.getName()] = self.matchedVertsDict
+
+            objectData['matchedVerts'] = vertDictContainer
+
+        with open(fileName, 'w') as outfile:
+            json.dump(objectData, outfile, indent=4) 
+  
     def start(self):
         """Tested on geo from : https://www.turbosquid.com/3d-models/military-uniform-2418050 """   
         start = time.time()
         try:
             cmds.select(self.cloth.getName() + "_SIM")
+            print("selected")
         except:
             self.cloth.createSimMesh()
-        self.innerFacesList = self.cloth.getInnerFaces()
         
-        x = len(self.innerFacesList)
-        for i in range(100):
-            try:
-                x = self.innerFacesList[i]
-                self.getMirrorFace(self.innerFacesList[i])
-            except IndexError:
-                print("error: " + str(i))
-            finally:
-                i += 1
-        #pprint.pprint(self.matchedFacesDict)
-        self.moveAllVerts()    
+        ready = self.cloth.alreadyMatched()
+        if ready:
+
+            self.matchedVertsDict = self.cloth.getVertsDict()
+            print("found")
+            self.moveLoadedVerts()
+            #self.cloth.deleteFaces()
+            #end = time.time()
+            #print("time " + str(end-start))
+        else:
+            self.innerFacesList = self.cloth.getInnerFaces()
+            
+            x = len(self.innerFacesList)
+            for i in range(200):
+                try:
+                    # x = self.innerFacesList[i]
+                    self.getMirrorFace(self.innerFacesList[i])
+                except IndexError:
+                    print("error: " + str(i))
+                finally:
+                    i += 1
+            #pprint.pprint(self.matchedFacesDict)
+            self.moveAllVerts()    
         
 
-        vertDictContainer = {}
-        vertDictContainer[self.cloth.getName()] = self.matchedVertsDict
+        
 
-        # with open(self.json_pathWrite, 'w') as outfile:
-        #     json.dump(vertDictContainer, outfile, indent=4)
+        
 
         self.cloth.deleteFaces()
         end = time.time()

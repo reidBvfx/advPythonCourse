@@ -122,7 +122,7 @@ class DSObject():
         return temp_vertexList       
     
     def createSimMesh(self):
-        simMesh = cmds.duplicate(self.getName(), n = (self.getName() + "_SIM"))[0]
+        self.simObjName = cmds.duplicate(self.getName(), n = (self.getName() + "_SIM"))[0]
 
     def deleteFaces(self):
         # select all but inner face mesh
@@ -136,6 +136,5 @@ class DSObject():
         cmds.delete()
         # cmds.delete(simMesh, constructionHistory = True)
         
-
 
 

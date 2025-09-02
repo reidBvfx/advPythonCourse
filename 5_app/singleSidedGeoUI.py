@@ -32,17 +32,13 @@ except NameError:
         sys.path.append(MY_SCRIPT_PATH)
 
 from DSObject import DSObject
+from DSObjectJSON import DSObjectJSON
 from getVertexInfo import getVertexInfo
 import singleSidedGeoUI as script
 
 #*******************************************************************
 # VARIABLE
-try:
-    TITLE = os.path.splitext(os.path.basename(__file__))[0]
-    if(TITLE == ""):
-        raise NameError
-except NameError:
-    TITLE = os.path.splitext(os.path.basename(script.__file__))[0]
+TITLE = os.path.splitext(os.path.basename(script.__file__))[0]
 
 TITLE = os.path.splitext(os.path.basename(script.__file__))[0]
 
@@ -53,10 +49,8 @@ class singleSidedGeoUI(QtWidgets.QDialog):
         super(singleSidedGeoUI, self).__init__(*args, **kwargs)
         # BUILD local ui path
         
-        try:
-            path_ui = "/".join([os.path.dirname(__file__), "ui", TITLE + ".ui"])
-        except:
-             path_ui = "/".join([os.path.dirname(script.__file__), "ui", TITLE + ".ui"])
+        
+        path_ui = "/".join([os.path.dirname(script.__file__), "ui", TITLE + ".ui"])
  
         # LOAD ui with absolute path
         QtCompat.loadUi(path_ui, self)
@@ -77,6 +71,13 @@ class singleSidedGeoUI(QtWidgets.QDialog):
         # create
         self.btnCreate.clicked.connect(self.create)
 
+        #load
+        self.btnLoad.clicked.connect(self.load)
+
+        #save
+        self.btnSave.clicked.connect(self.saveFileDialog)
+        self.progressBar.setValue(0)
+        self.VI = ""
         # SHOW the UI
         self.show()
         self.resize(500, 500)
@@ -124,12 +125,47 @@ class singleSidedGeoUI(QtWidgets.QDialog):
     def clear_outer(self):
         self.listOuter.clear()
         self.doubleObj.clearOuterFaces()
+    
+    def incrementProgress(self, v):
+        self.progressBar.setValue(v)
     # create
     def create(self):
         #print("length Inner : " + str((len(self.doubleObj.getInnerFaces()))))
-        VI = getVertexInfo(self.doubleObj)
-        VI.start()
+        self.VI = getVertexInfo(self.doubleObj)
+        self.VI.start()
         #print("pressed start")
+
+    def load(self):
+        options = QtWidgets.QFileDialog.Options()
+        self.fileReadName, _ = QtWidgets.QFileDialog.getOpenFileName(self,"Load JSON", "","All Files (*)", options=options)
+        if self.fileReadName:
+            print(self.fileReadName)
+            self.doubleObj = DSObjectJSON(self.fileReadName)
+            self.lineObject.setText(self.doubleObj.getName())
+            for face in self.doubleObj.getInnerFaces():
+                self.listInner.addItem(face)
+            for face in self.doubleObj.getOuterFaces():
+                self.listOuter.addItem(face)
+
+    def saveFileDialog(self):
+        file_dialog = QtWidgets.QFileDialog(self)
+        file_dialog.setWindowTitle("Save JSON")
+        file_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptMode.AcceptSave)
+        file_dialog.setViewMode(QtWidgets.QFileDialog.ViewMode.Detail)
+
+        if file_dialog.exec():
+            selected_file = file_dialog.selectedFiles()[0]
+            print("Selected File for Saving:", selected_file)
+            try:
+                self.VI.writeJSON(self.fileReadName,selected_file)
+            except AttributeError: 
+                self.VI = getVertexInfo(self.doubleObj)
+                try:
+                    self.VI.writeJSON(self.fileReadName,selected_file)
+                except:
+                    self.VI.writeJSON(selected_file)
+            
+                
 
 def getMainWindow():
     mw_ptr = omui.MQtUtil.mainWindow()
