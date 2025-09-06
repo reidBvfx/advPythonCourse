@@ -12,16 +12,14 @@ class DSObjectJSON(DSObject, ABC):
     def __init__(self, path):
         # path to get object info
         self.json_path = path
-        #print("DSJSON called")
         # read json file
         with open(self.json_path) as json_file:
             self.objectData = json.load(json_file) 
-        """Used config file because each object has a large amount of data set up in an easily callable way
-            having all the data within a py file would make it hard to parse and edit"""
+        # create DSObject with info
         super().__init__(self.objectData['objectName'])
+        
         self.simObjName = self.objectData['simObjectName']
         self.simShapeName = self.simObjName + "Shape"
-
         self.outerFaces = self.correctNameFace(self.objectData['outerFaces'])
         self.innerFaces = self.correctNameFace(self.objectData['innerFaces'])
         self.thickness = self.objectData['thickness']
@@ -44,8 +42,8 @@ class DSObjectJSON(DSObject, ABC):
         except:
             return False
         
+        # check if dictonary has any data inside it
         if testData:
-
             return True
         else:
             return False

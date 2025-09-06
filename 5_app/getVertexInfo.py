@@ -9,18 +9,16 @@
 # author  = Reid Bryan (reidwarhola@gmail.com)
 #**********************************************************************************
 
+import maya.cmds as cmds # type: ignore
+
 import json
 import time
 import os 
-import sys
 from copy import copy 
-import pprint 
-import maya.cmds as cmds # type: ignore
-__file__ = 'C:\\Users\\apoll\\Desktop\\advPythonCourse\\5_app\\'
 
-sys.path.append(os.path.dirname(__file__))
+# sys.path.append(os.path.dirname(__file__))
 from DSObjectJSON import DSObjectJSON as ds
-#import singleSidedGeoUI 
+
 
 class getVertexInfo():
     def __init__(self, cloth, ssg):
@@ -79,7 +77,6 @@ class getVertexInfo():
                 oFaceLoc = self.locationFaceD[oFace]
             except: 
                 oFaceLoc = cmds.xform(oFace, t = True, q = True)
-            #oFaceLoc = cmds.xform(oFace, t = True, q = True)
             #edge faces have 9 others have 6
             if(len(oFaceLoc) != rangeL):
                 break
@@ -88,7 +85,6 @@ class getVertexInfo():
             
             for i in range(rangeL):
                 diffN = abs(float((faceLoc[i] - oFaceLoc[i])))
-                #print(face + " : " + oFace)
                 if(diffN < 3):
                     match += 1
                 diff += diffN
@@ -173,12 +169,13 @@ class getVertexInfo():
                     match += 1
                     diff += diffN
                 i+=1
-            
             if(diff < smallestDiff):
                 matchVert = vert
                 smallestDiff = diff
+        
         if(matchVert != ""):
             self.matchedVertsDict[v] = matchVert       
+        
         self.outerVerts.remove(matchVert)       
         return matchVert
 
@@ -215,10 +212,10 @@ class getVertexInfo():
         start = time.time()
         try:
             cmds.select(self.cloth.getSimName())
-            
         except:
             self.cloth.createSimMesh()
         self.unMatchedFaces = copy(self.cloth.getOuterFaces())
+        
         try:
             ready = self.cloth.alreadyMatched()
         except:
@@ -234,7 +231,6 @@ class getVertexInfo():
         else:
             for i in range(x):
                 try:
-                    # x = self.innerFacesList[i]
                     self.getMirrorFace(self.innerFacesList[i])
                     self.ssg.incrementProgress(int((25*i)/x))
                 except IndexError:

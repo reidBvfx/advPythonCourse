@@ -12,44 +12,27 @@ import maya.cmds as cmds #type: ignore
 import maya.OpenMayaUI as omui#type: ignore
 
 import os
-import sys
-
-
 from Qt import QtWidgets, QtGui, QtCore, QtCompat
 from shiboken2 import *
-
-
-
-# don't delete!!!!doesn't work otherwise ----------------------------------
-mw_ptr = omui.MQtUtil.mainWindow()
-mayaMainWindow = wrapInstance(int(mw_ptr), QtWidgets.QMainWindow)
-#--------------------------------------------------------------------------
-# try:
-#     test = __file__
-# except NameError:
-#     MY_SCRIPT_PATH = "C:\\Users\\apoll\\Desktop\\advPythonCourse\\5_app"
-#     if MY_SCRIPT_PATH not in sys.path:
-#         sys.path.append(MY_SCRIPT_PATH)
 
 from DSObject import DSObject
 from DSObjectJSON import DSObjectJSON
 from getVertexInfo import getVertexInfo
 import singleSidedGeoUI as script
 
+
+
 #*******************************************************************
 # VARIABLE
 TITLE = os.path.splitext(os.path.basename(script.__file__))[0]
 
 #*******************************************************************
-# CLASS
+
 class singleSidedGeoUI(QtWidgets.QDialog):
     def __init__(self, *args, **kwargs):
         super(singleSidedGeoUI, self).__init__(*args, **kwargs)
         # BUILD local ui path
-        
-        
         path_ui = "/".join([os.path.dirname(script.__file__), "ui", TITLE + ".ui"])
- 
         # LOAD ui with absolute path
         QtCompat.loadUi(path_ui, self)
 
@@ -60,7 +43,7 @@ class singleSidedGeoUI(QtWidgets.QDialog):
         self.btnAddSelectedInner.clicked.connect(self.addSel_inner)
         self.btnRemoveInner.clicked.connect(self.removeSel_inner)
         self.btnClearAllInner.clicked.connect(self.clear_inner)
-
+        
         # for outer faces
         self.btnAddSelectedOuter.clicked.connect(self.addSel_outer)
         self.btnRemoveOuter.clicked.connect(self.removeSel_outer)
@@ -68,21 +51,22 @@ class singleSidedGeoUI(QtWidgets.QDialog):
         
         # create
         self.btnCreate.clicked.connect(self.create)
-
+        
         #load
         self.btnLoad.clicked.connect(self.load)
-
+        
         #save
         self.btnSave.clicked.connect(self.saveFileDialog)
         self.progressBar.setValue(0)
         self.VI = ""
+        
         # SHOW the UI
         self.show()
-        self.resize(500, 500)
+        
 
-    #************************************************************
-    # PRESS
+    # PRESS ACTIONS************************************************************
     def addSel_obj(self):
+        """ create DSObject or update DSObject name based on input"""
         name = cmds.ls(sl=1,sn=True)[0]
         self.lineObject.setText(name)
         try:
@@ -90,8 +74,8 @@ class singleSidedGeoUI(QtWidgets.QDialog):
         except AttributeError:
             self.doubleObj = DSObject(name)
 
-
     def addSel_inner(self):
+        """ update innerFaces list"""
         faces = cmds.ls(sl=1,sn=True)
         try:
             self.doubleObj
@@ -112,10 +96,12 @@ class singleSidedGeoUI(QtWidgets.QDialog):
             self.doubleObj.removeInnerFace(row)
 
     def clear_inner(self):
+        """ remove entire innerFacesList"""
         self.listInner.clear()
         self.doubleObj.clearInnerFaces()
 
     def addSel_outer(self):
+        """update outer faces list"""
         faces = cmds.ls(sl=1,sn=True)
         try:
             self.doubleObj
@@ -140,14 +126,17 @@ class singleSidedGeoUI(QtWidgets.QDialog):
         self.doubleObj.clearOuterFaces()
     
     def incrementProgress(self, v):
+        """ update progress bar to given value
+            used exclusively by getVertexInfo """
         self.progressBar.setValue(v)
     
-    # create
     def create(self):
+        """ get process started on creating single sided mesh geo """
         self.VI = getVertexInfo(self.doubleObj, self)
         self.VI.start()
 
     def load(self):
+        """ read JSON file and update UI"""
         if self.btnLoad.text() == "Unload":
             self.unload()
         else:
@@ -166,6 +155,7 @@ class singleSidedGeoUI(QtWidgets.QDialog):
                 self.btnLoad.setText("Unload")
 
     def unload(self):
+        """ leaves all info in UI but will no longer read info from JSON file"""
         self.doubleObj.setPath(" ")
         self.doubleObj.setMatched(" ")
         self.btnLoad.setStyleSheet('background-color:  rgb(110, 110, 110);')
@@ -188,7 +178,14 @@ class singleSidedGeoUI(QtWidgets.QDialog):
         objName = face.split('.f')[0]
         return objName
 
+
+# don't delete!!!!doesn't work otherwise ----------------------------------
+mw_ptr = omui.MQtUtil.mainWindow()
+mayaMainWindow = wrapInstance(int(mw_ptr), QtWidgets.QMainWindow)
+#--------------------------------------------------------------------------
+
 def getMainWindow():
+    """ makes window stay infront of main Maya window """
     mw_ptr = omui.MQtUtil.mainWindow()
     mayaMainWindow = wrapInstance(int(mw_ptr), QtWidgets.QMainWindow)
     return mayaMainWindow
@@ -197,8 +194,8 @@ def show():
     win = singleSidedGeoUI(parent = getMainWindow())
     win.setWindowFlags(QtCore.Qt.Window)
     win.show()  
+    win.resize(500, 500)
     win = None
-
 
 show()
 

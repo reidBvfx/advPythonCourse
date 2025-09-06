@@ -4,7 +4,7 @@
 #
 # Requires this mel command to be run in maya first in a userSetup.mel file
 # commandPort -n "localhost:7001" -stp "python";
-#
+# sourced from: https://andysedano.dev/2021/06/01/execute-code-in-maya-from-vscode/
 #######################################################################
 import os
 import sys

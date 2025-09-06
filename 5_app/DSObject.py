@@ -4,9 +4,7 @@
 # date    = 2025-08-08
 # author  = Reid Bryan (reidwarhola@gmail.com)
 #**********************************************************************************
-import json
 import re
-import os
 from abc import ABC
 
 import maya.cmds as cmds #type: ignore
@@ -19,7 +17,6 @@ class DSObject():
         self.outerFaces = []
         self.innerFaces = []
         self.thickness = 0
-        #print("DSobj called")
 
     def setName(self,name):
         self.objName = name
@@ -28,6 +25,7 @@ class DSObject():
 
     def setThickness(self, v):
         self.thickness = v
+    
     # inner faces commands ###################################
     def setInnerFaceList(self, faces):
         newList = self.correctNameFace(faces)
@@ -73,8 +71,8 @@ class DSObject():
     
     def getThickness(self):
         return self.thickness
+    
     # helper functs 
-
     def findVertNumber(self, vert):
         """ take vertex name and return int inside the brackets"""
         try:
@@ -122,7 +120,6 @@ class DSObject():
         temp_vertexList = []
         for vertex in vertexList:
                 objName, bracket = vertex.split('.vtx')
-                # correct naming convention
                 if ":" in vertex:  
                     nPCompile = re.compile(r'(\d+)') 
                     numbers = nPCompile.findall(bracket)
@@ -157,20 +154,16 @@ class DSObject():
             faceNum = []
             for face in self.innerFaces:
                 faceNum.append(str(self.findNumber(face)))
-            # faceSelect = []
             for num in faceNum:
                 try:    
                     faceSelect =(self.simShapeName + ".f[" + num + "]") 
                     cmds.select(faceSelect, tgl = True)  
                 except:
                     print("error")
-                    pass
-            # cmds.select(faceSelect, d = True)  
+                    passs
             cmds.delete()
         except:
             pass
-        
-        # cmds.delete(simMesh, constructionHistory = True)
-        
+
 
 
