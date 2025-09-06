@@ -40,6 +40,7 @@ class getVertexInfo():
         #path to export matching verts Dict
         self.json_pathWrite = os.path.join(os.path.dirname(__file__), writePath)
         self.locationFaceD = {}
+        self.avgDistance = 0
          
     def faceToVert(self, faces):
         """ Convert list of faces into list of corresponding vertices
@@ -69,26 +70,25 @@ class getVertexInfo():
             faceLoc = self.locationFaceD[face]
         except: 
             faceLoc = cmds.xform(face, t = True, q = True)
-        
         smallestDiff = 2
         matchFace = ""
         rangeL = len(faceLoc)
         # find face with the closest matching bounding box on 2 planes
         for oFace in self.unMatchedFaces:
             try:
-                oFaceLoc = self.locationFaceD[face]
+                oFaceLoc = self.locationFaceD[oFace]
             except: 
-                oFaceLoc = cmds.xform(face, t = True, q = True)
+                oFaceLoc = cmds.xform(oFace, t = True, q = True)
             #oFaceLoc = cmds.xform(oFace, t = True, q = True)
             #edge faces have 9 others have 6
-           
             if(len(oFaceLoc) != rangeL):
                 break
             match = 0
-            diff = 0
+            diff = 0.0
             
             for i in range(rangeL):
-                diffN = abs(faceLoc[i] - oFaceLoc[i])
+                diffN = abs(float((faceLoc[i] - oFaceLoc[i])))
+                #print(face + " : " + oFace)
                 if(diffN < 3):
                     match += 1
                 diff += diffN
@@ -100,16 +100,18 @@ class getVertexInfo():
             if(diff < smallestDiff):
                 matchFace = oFace
                 smallestDiff = diff
-                if smallestDiff < .01 :
+                if smallestDiff < .85 :
                     self.unMatchedFaces.remove(matchFace) 
                     self.matchedFacesDict[face] = matchFace  
+                    self.avgDistance += smallestDiff
                     return matchFace   
 
         try:
             self.unMatchedFaces.remove(matchFace) 
             self.matchedFacesDict[face] = matchFace  
+            self.avgDistance += smallestDiff
         except:
-            print("Error with " + face + "because " + matchFace + " not in dictionary")    
+            print("No match for " + face)    
             
         return matchFace   
 
@@ -121,7 +123,6 @@ class getVertexInfo():
             innerVerts = self.faceToVert(key)
             self.outerVerts = []
             self.outerVerts = self.faceToVert(self.matchedFacesDict[key])
-
             for each in innerVerts:
                 self.findMirrorVert(each, self.outerVerts)
             self.ssg.incrementProgress(25 + int((25*i)/x))
@@ -129,9 +130,10 @@ class getVertexInfo():
         # all matching verts are in dict so find center
         i = 0
         x = len(self.matchedVertsDict)
+
         for keyVert in self.matchedVertsDict:
             center = self.findCenter(keyVert, self.matchedVertsDict[keyVert])
-            vNumber = self.cloth.findNumber(keyVert)
+            vNumber = self.cloth.findVertNumber(keyVert)
             dupV = f"{self.cloth.simShapeName}.vtx[{vNumber}]"
             cmds.xform(dupV, t = center)
             self.ssg.incrementProgress(50 + int((25*i)/x))
@@ -142,10 +144,8 @@ class getVertexInfo():
         x = len(self.matchedVertsDict)
         
         for keyVert in self.matchedVertsDict:
-            #print("key : " + keyVert + "value: " + self.matchedVertsDict[keyVert] )
-            #pprint.pprint(outerv)
             center = self.findCenter(keyVert, self.matchedVertsDict[keyVert])
-            vNumber = self.cloth.findNumber(keyVert)
+            vNumber = self.cloth.findVertNumber(keyVert)
             dupV = f'{self.cloth.simShapeName}.vtx[{vNumber}]'
             cmds.xform(dupV, t = (center))
             self.ssg.incrementProgress(50 + int((50*i)/x))
@@ -177,8 +177,8 @@ class getVertexInfo():
             if(diff < smallestDiff):
                 matchVert = vert
                 smallestDiff = diff
-
-        self.matchedVertsDict[v] = matchVert
+        if(matchVert != ""):
+            self.matchedVertsDict[v] = matchVert       
         self.outerVerts.remove(matchVert)       
         return matchVert
 
@@ -189,7 +189,6 @@ class getVertexInfo():
         Returns:
               - list of x, y, and z coordinates
         """
-
         inner = cmds.xform(innerv, t = True, q = True)
         outer = cmds.xform(outerv, t = True, q = True)
         x = outer[0] - ((outer[0] - inner[0])/2)
@@ -198,33 +197,14 @@ class getVertexInfo():
      
         return([x, y, z])
 
-    def writeJSON(self, readName = "", fileName = ""):
-        
-        if fileName == "": 
-            fileName =self.json_pathWrite
-        if ".json" not in fileName:
-            fileName = fileName + ".json"
-        
-        try:
-            with open(readName) as json_file:
-                objectData = json.load(json_file) 
-            vertDictContainer = {}
-        
-            vertDictContainer[self.cloth.getName()] = self.matchedVertsDict
-            objectData['matchedVerts'].append(vertDictContainer)
-            json_file.seek(0) 
-            # Write the updated data back to the file
-            json.dump(objectData, json_file, indent=4)
-        except:
-            objectData = {}
-            objectData['objectName'] = self.cloth.getName()
-            objectData['simObjectName'] = self.cloth.getName() + "_SIM"
-            objectData['innerFaces'] = self.cloth.getInnerFaces()
-            objectData['outerFaces'] = self.cloth.getOuterFaces()
-
-            vertDictContainer = {}
-            # vertDictContainer[self.cloth.getName()] = self.matchedVertsDict
-            objectData['matchedVerts'] = self.matchedVertsDict
+    def writeJSON(self, fileName):
+        objectData = {}
+        objectData['objectName'] = self.cloth.getName()
+        objectData['simObjectName'] = self.cloth.getName() + "_SIM"
+        objectData['thickness'] = self.cloth.getThickness()
+        objectData['innerFaces'] = self.cloth.getInnerFaces()
+        objectData['outerFaces'] = self.cloth.getOuterFaces()
+        objectData['matchedVerts'] = self.matchedVertsDict
 
         with open(fileName, 'w') as outfile:
             json.dump(objectData, outfile, indent=4) 
@@ -234,23 +214,24 @@ class getVertexInfo():
         
         start = time.time()
         try:
-            cmds.select(self.cloth.getName() + "_SIM")
+            cmds.select(self.cloth.getSimName())
             
         except:
             self.cloth.createSimMesh()
-        
         self.unMatchedFaces = copy(self.cloth.getOuterFaces())
-        ready = self.cloth.alreadyMatched()
+        try:
+            ready = self.cloth.alreadyMatched()
+        except:
+            ready = False
         # if ready mean file is loaded with matchedVerts already found
+        self.innerFacesList = self.cloth.getInnerFaces()
+        x = len(self.cloth.getInnerFaces()) 
         if ready:
             self.matchedVertsDict = self.cloth.getVertsDict()
             self.ssg.incrementProgress(50)
-            print("found list")
             self.moveLoadedVerts()
-        else:
-            self.innerFacesList = self.cloth.getInnerFaces()
             
-            x = len(self.innerFacesList)
+        else:
             for i in range(x):
                 try:
                     # x = self.innerFacesList[i]
@@ -260,12 +241,11 @@ class getVertexInfo():
                     print("error: " + str(i))
                 finally:
                     i += 1
-            #self.ssg.incrementProgress(25)
-            self.moveAllVerts()    
+            self.moveAllVerts() 
+            self.cloth.setThickness(self.avgDistance/x)
         
-        dend = time.time()
-        print("time before delete " + str(dend-start))
-        print("starting delete")
+        print('Thickness: {0:.10f}'.format(self.cloth.getThickness()))
+        
         self.ssg.incrementProgress(90)
         self.cloth.deleteFaces()
         self.ssg.incrementProgress(100)

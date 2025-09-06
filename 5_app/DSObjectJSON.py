@@ -24,6 +24,7 @@ class DSObjectJSON(DSObject, ABC):
 
         self.outerFaces = self.correctNameFace(self.objectData['outerFaces'])
         self.innerFaces = self.correctNameFace(self.objectData['innerFaces'])
+        self.thickness = self.objectData['thickness']
 
     def setMatched(self, jsonFile):
          self.matchedVertPath = jsonFile

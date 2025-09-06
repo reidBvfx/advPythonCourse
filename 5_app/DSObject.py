@@ -16,9 +16,9 @@ class DSObject():
         self.objName = name
         self.simObjName = name + "_SIM"
         self.simShapeName = name + "_SIMShape" 
-
         self.outerFaces = []
         self.innerFaces = []
+        self.thickness = 0
         #print("DSobj called")
 
     def setName(self,name):
@@ -26,6 +26,8 @@ class DSObject():
         self.simObjName = name + "_SIM"
         self.simShapeName = name + "_SIMShape" 
 
+    def setThickness(self, v):
+        self.thickness = v
     # inner faces commands ###################################
     def setInnerFaceList(self, faces):
         newList = self.correctNameFace(faces)
@@ -65,12 +67,30 @@ class DSObject():
     
     def getName(self):
         return self.objName
+    
+    def getSimName(self):
+        return self.simObjName
+    
+    def getThickness(self):
+        return self.thickness
     # helper functs 
+
+    def findVertNumber(self, vert):
+        """ take vertex name and return int inside the brackets"""
+        try:
+            objName, bracket = vert.split('.vtx')
+            nPCompile = re.compile(r'(\d+)') 
+            number = nPCompile.findall(bracket)[0]
+            return number
+        except:
+            return  
+        
     def findNumber(self, vert):
         """ take vertex name and return int inside the brackets"""
         try:
+            objName, bracket = vert.split('.f')
             nPCompile = re.compile(r'(\d+)') 
-            number = nPCompile.findall(vert)[0]
+            number = nPCompile.findall(bracket)[0]
             return number
         except:
             return  
@@ -86,10 +106,10 @@ class DSObject():
         """ removed range from bracket [x:y] and inserts value in range into new list"""
         temp_faceList = []
         for face in facesList:
-                objName = face.split('.f')[0]
+                objName, bracket = face.split('.f')
                 if ":" in face:  
                     nPCompile = re.compile(r'(\d+)') 
-                    numbers = nPCompile.findall(face)
+                    numbers = nPCompile.findall(bracket)
                     for i in range(int(numbers[0]), int(numbers[1])+1):
                         temp_faceList.append(objName + ".f[" +str(i) + ']') 
                         i += 1
@@ -101,11 +121,11 @@ class DSObject():
         """ removed range from bracket [x:y] and inserts value in range into new list"""
         temp_vertexList = []
         for vertex in vertexList:
-                objName = vertex.split('.vtx')[0]
+                objName, bracket = vertex.split('.vtx')
                 # correct naming convention
                 if ":" in vertex:  
                     nPCompile = re.compile(r'(\d+)') 
-                    numbers = nPCompile.findall(vertex)
+                    numbers = nPCompile.findall(bracket)
                     for i in range(int(numbers[0]), int(numbers[1])+1):
                         temp_vertexList.append(objName + ".vtx[" +str(i) + ']') 
                         i += 1
@@ -117,35 +137,38 @@ class DSObject():
         """ removed range from bracket [x:y] and inserts value in range into new list"""
         temp_vertexList = []
         for vertex in vertexList:
-                objName = vertex.split('.vtx')[0]
+                objName, bracket = vertex.split('.vtx[')
                 # correct naming convention
                 nPCompile = re.compile(r'(\d+)') 
-                numbers = nPCompile.findall(vertex)
+                numbers = nPCompile.findall(bracket)
                 temp_vertexList.append(numbers[0]) 
         return temp_vertexList       
     
     def createSimMesh(self):
-        self.simObjName = cmds.duplicate(self.getName(), n = (self.getName() + "_SIM"))[0]
+        self.simObjName = cmds.duplicate(self.getName(), n = (self.getSimName()))[0]
+        
 
     def deleteFaces(self):
         # select all but inner face mesh
         cmds.select( clear=True )#clear anything selected
         cmds.select(self.simShapeName + ".f[*]")#select all faces
         # deselect all inner faces
-        faceNum = []
-        for face in self.innerFaces:
-            faceNum.append(str(self.findNumber(face)))
-        faceSelect = []
-        for num in faceNum:
-            try:    
-                faceSelect.append(self.simShapeName + ".f[" + num + "]") 
-            except:
-                print("error")
-                pass
-        cmds.select(faceSelect, d = True)  
-        cmds.delete()
-
-        
+        try:
+            faceNum = []
+            for face in self.innerFaces:
+                faceNum.append(str(self.findNumber(face)))
+            # faceSelect = []
+            for num in faceNum:
+                try:    
+                    faceSelect =(self.simShapeName + ".f[" + num + "]") 
+                    cmds.select(faceSelect, tgl = True)  
+                except:
+                    print("error")
+                    pass
+            # cmds.select(faceSelect, d = True)  
+            cmds.delete()
+        except:
+            pass
         
         # cmds.delete(simMesh, constructionHistory = True)
         

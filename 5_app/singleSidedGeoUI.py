@@ -90,8 +90,16 @@ class singleSidedGeoUI(QtWidgets.QDialog):
         except AttributeError:
             self.doubleObj = DSObject(name)
 
+
     def addSel_inner(self):
         faces = cmds.ls(sl=1,sn=True)
+        try:
+            self.doubleObj
+        except:
+            name = self.getName(faces[0])
+            name = name.replace("Shape", "")
+            self.doubleObj = DSObject(name)
+            self.lineObject.setText(name)
         faces = self.doubleObj.setInnerFaceList(faces)
         for face in faces:
             self.listInner.addItem(face)
@@ -109,6 +117,13 @@ class singleSidedGeoUI(QtWidgets.QDialog):
 
     def addSel_outer(self):
         faces = cmds.ls(sl=1,sn=True)
+        try:
+            self.doubleObj
+        except:
+            name = self.getName(faces[0])
+            name = name.replace("Shape", "")
+            self.doubleObj = DSObject(name)
+            self.lineObject.setText(name)
         faces = self.doubleObj.setOuterFaceList(faces)
         for face in faces:
             self.listOuter.addItem(face)
@@ -129,13 +144,8 @@ class singleSidedGeoUI(QtWidgets.QDialog):
     
     # create
     def create(self):
-        try:   
-            self.VI.start()
-            print("restart")
-        except: 
-            print("new start")
-            self.VI = getVertexInfo(self.doubleObj, self)
-            self.VI.start()
+        self.VI = getVertexInfo(self.doubleObj, self)
+        self.VI.start()
 
     def load(self):
         if self.btnLoad.text() == "Unload":
@@ -169,17 +179,14 @@ class singleSidedGeoUI(QtWidgets.QDialog):
 
         if file_dialog.exec():
             selected_file = file_dialog.selectedFiles()[0]
-            
-            try:
-                self.VI.writeJSON(self.fileReadName,selected_file)
-            except AttributeError: 
-                self.VI = getVertexInfo(self.doubleObj)
-                try:
-                    self.VI.writeJSON(self.fileReadName,selected_file)
-                except:
-                    self.VI.writeJSON(selected_file)
+            if ".json" not in selected_file:
+                selected_file = selected_file + ".json"
+            self.VI.writeJSON(selected_file)
             print("Saved at: ", selected_file)
                 
+    def getName(self, face):
+        objName = face.split('.f')[0]
+        return objName
 
 def getMainWindow():
     mw_ptr = omui.MQtUtil.mainWindow()
