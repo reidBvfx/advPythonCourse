@@ -160,7 +160,7 @@ class DSObject():
                     cmds.select(faceSelect, tgl = True)  
                 except:
                     print("error")
-                    passs
+                    pass
             cmds.delete()
         except:
             pass
